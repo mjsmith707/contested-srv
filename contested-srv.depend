@@ -1,0 +1,125 @@
+# depslib dependency file v1.0
+1409280241 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\config.cpp
+	"../header/config.h"
+
+1409289323 /config.h"
+
+1409275514 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\parsecfg.cpp
+
+1409275514 c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\header\parsecfg.h
+
+1409280565 c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\header\config.h
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1409294279 >
+
+1409280187 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\svrmain.cpp
+	"../header/config.h"
+	"../header/logger.h"
+	<iostream>
+
+1409299321 
+
+1409282930 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\logger.cpp
+	"../header/logger.h"
+	<time.h>
+
+1409282927 c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\header\logger.h
+	"../header/config.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1409280187 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\svr_main.cpp
+	"../header/config.h"
+	"../header/logger.h"
+	<iostream>
+
+1409289323 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-srv\source\config.cpp
+	"../header/config.h"
+
+1409289323 c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-srv\header\config.h
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1409299321 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-srv\source\logger.cpp
+	"../header/logger.h"
+	<cstdio>
+	<cstdarg>
+	<ctime>
+
+1409294279 c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-srv\header\logger.h
+	"../header/config.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1409297460 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-srv\source\srv_main.cpp
+	"../header/config.h"
+	"../header/logger.h"
+	<iostream>
+
+1409359940 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
+	"../header/config.h"
+
+1409367907 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
+	"../header/constants.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1409366580 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
+	"../header/logger.h"
+
+1409367907 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
+	"../header/constants.h"
+	"../header/config.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+	<cstdio>
+	<cstdarg>
+	<ctime>
+
+1409366679 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
+	"../header/srv_db.h"
+
+1409367906 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	<cppconn/driver.h>
+	<cppconn/connection.h>
+	<cppconn/statement.h>
+	<cppconn/prepared_statement.h>
+	<cppconn/resultset.h>
+	<cppconn/metadata.h>
+	<cppconn/resultset_metadata.h>
+	<cppconn/exception.h>
+	<cppconn/warning.h>
+
+1409366610 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
+	"../header/config.h"
+	"../header/logger.h"
+	"../header/srv_db.h"
+	<iostream>
+	<thread>
+	<chrono>
+
+1409359480 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/constants.h
+
