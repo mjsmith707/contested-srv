@@ -14,12 +14,14 @@
 #include <cstdio>
 #include <cstdarg>
 #include <ctime>
+#include <mutex>
 
 class Logger {
     private:
     Config* runningConfig;
     time_t unixTime;
     struct tm* localTime;
+    std::mutex msgMute;
 
     void writeMsg(std::string message);
     void printMsg(std::string message);

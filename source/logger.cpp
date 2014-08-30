@@ -15,6 +15,7 @@ void Logger::setConfig(Config* configuration) {
 void Logger::sendMsg(const char* strFormat, ...) {
     va_list varArgs;
     va_start(varArgs, strFormat);
+    std::lock_guard<std::mutex> lock(msgMute);
     std::string formatStr = strFormat;
     std::string message = "";
 
