@@ -5,7 +5,6 @@
 		<Option title="contested-srv" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="header/;" />
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/contested-srv" prefix_auto="1" extension_auto="1" />
@@ -45,9 +44,7 @@
 		<Unit filename="source/config.cpp" />
 		<Unit filename="source/logger.cpp" />
 		<Unit filename="source/srv_db.cpp" />
-		<Unit filename="source/srv_main.cpp">
-			<Option virtualFolder="header/" />
-		</Unit>
+		<Unit filename="source/srv_main.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
