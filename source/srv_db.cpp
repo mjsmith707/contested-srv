@@ -42,3 +42,45 @@ std::string SRV_DB::intToString(int val) {
 bool SRV_DB::getConnectionStatus() {
     return connectionStatus;
 }
+
+bool SRV_DB::authenticateUser(std::string username, std::string password) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("Authentication failed. Unable to connect to database.");
+            return false;
+        }
+    }
+
+    // Todo: sha512, scrubbing username input for bad stuff (SELECT FROM * DROP *) etc.
+    std::string query = "SELECT PASSWORD FROM USERS WHERE USER_NAME='" + username + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return false;
+    }
+    // Should never get more than one result... if we do were in trouble.
+    sql::SQLString resultStr;
+    while(results->next()) {
+        resultStr = results->getString(1);
+    }
+
+    std::string resultPw = resultStr.asStdString();
+
+    if (resultPw.compare(password)) {
+        runningLog->sendMsg("Authentication successful for %s.", username.c_str());
+        return true;
+    }
+    else {
+        runningLog->sendMsg("Authentication failed for %s.", username.c_str());
+        return false;
+    }
+}

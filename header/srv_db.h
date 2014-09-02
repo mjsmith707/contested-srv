@@ -8,7 +8,7 @@
 
 /* MySQL Connector/C++ specific headers */
 // You must link to mysqlcppcon.so (probably in /usr/lib/)
-// This should be handled in the cbp project.
+// This should be handled in the makefile/cbp project.
 #include <cppconn/driver.h>
 #include <cppconn/connection.h>
 #include <cppconn/statement.h>
@@ -36,6 +36,7 @@ class SRV_DB {
     public:
     SRV_DB(Config* newConfig, Logger* newLog);
     bool getConnectionStatus();
+    bool authenticateUser(std::string username, std::string password);
 
 };
 

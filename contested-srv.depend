@@ -70,10 +70,10 @@
 	"../header/logger.h"
 	<iostream>
 
-1409359940 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
+1409367907 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
 	"../header/config.h"
 
-1409367907 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
+1409368045 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
 	"../header/constants.h"
 	<vector>
 	<string>
@@ -81,10 +81,10 @@
 	<iostream>
 	<stdexcept>
 
-1409366580 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
+1409376817 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
 	"../header/logger.h"
 
-1409367907 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
+1409376817 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
 	"../header/constants.h"
 	"../header/config.h"
 	<vector>
@@ -95,11 +95,12 @@
 	<cstdio>
 	<cstdarg>
 	<ctime>
+	<mutex>
 
-1409366679 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
+1409694333 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
 	"../header/srv_db.h"
 
-1409367906 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
+1409693290 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
 	"../header/constants.h"
 	"../header/config.h"
 	"../header/logger.h"
@@ -113,7 +114,8 @@
 	<cppconn/exception.h>
 	<cppconn/warning.h>
 
-1409366610 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
+1409693985 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
+	"../header/constants.h"
 	"../header/config.h"
 	"../header/logger.h"
 	"../header/srv_db.h"
