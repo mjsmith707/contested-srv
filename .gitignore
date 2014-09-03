@@ -5,3 +5,5 @@
 *.depend
 contested-srv.layout
 contested-srv.depend
+bin/Debug/contested-srv
+contested-srv.layout

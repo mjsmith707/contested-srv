@@ -134,14 +134,17 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
         resultStr = results->getString(1);
     }
 
-    std::string resultPw = resultStr.asStdString();
     runningLog->sendMsg("%s", resultPw.c_str());
     if (resultPw.compare(password) == 0) {
-        runningLog->sendMsg("Authentication successful for %s.", username.c_str());
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Authentication successful for %s.", username.c_str());
+        }
         return true;
     }
     else {
-        runningLog->sendMsg("Authentication failed for %s.", username.c_str());
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Authentication failed for %s.", username.c_str());
+        }
         return false;
     }
 }
