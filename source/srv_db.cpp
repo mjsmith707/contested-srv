@@ -189,7 +189,15 @@ bool SRV_DB::deleteUser(std::string username, std::string password, std::string 
         }
     }
 
-    std::string query = "DELETE FROM users WHERE user_id='" + intToString(getUserID(username)) + "' AND user_name='" + username + "';";
+    int userid = getUserID(username);
+    if (userid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
+        }
+        return false;
+    }
+
+    std::string query = "DELETE FROM users WHERE user_id='" + intToString(userid) + "' AND user_name='" + username + "';";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
