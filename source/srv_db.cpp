@@ -43,16 +43,15 @@ bool SRV_DB::getConnectionStatus() {
     return connectionStatus;
 }
 
-bool SRV_DB::authenticateUser(std::string username, std::string password) {
+bool SRV_DB::createUser(std::string username, std::string password, std::string email_address) {
     if (!connectionStatus) {
         if(!openConnection()) {
-            runningLog->sendMsg("Authentication failed. Unable to connect to database.");
+            runningLog->sendMsg("createUser() failed. Unable to connect to database.");
             return false;
         }
     }
 
-    // Todo: sha512, scrubbing username input for bad stuff (SELECT FROM * DROP *) etc.
-    std::string query = "SELECT PASSWORD FROM USERS WHERE USER_NAME='" + username + "';";
+    std::string query = "SELECT user_name FROM users WHERE user_name='" + username + "';";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
@@ -60,6 +59,66 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
     sql::Statement* sqlStatement;
     sql::ResultSet* results;
     try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return false;
+    }
+    // Should never get more than one result... if we do were in trouble.
+    sql::SQLString resultStr;
+    while(results->next()) {
+        resultStr = results->getString(1);
+    }
+
+    std::string resultUser = resultStr.asStdString();
+
+    if (resultUser.compare(username) == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("createUser() failed. User '%s' already exists.", username.c_str());
+        }
+        return false;
+    }
+    else {
+        std::string createStmnt = "INSERT INTO users(user_name, user_score, password, user_email) values('" + username + "','0','" + password + "','" + email_address + "');";
+        try {
+            sqlStatement = connection->createStatement();
+            sqlStatement->execute("USE contested;");
+            sqlStatement = connection->createStatement();
+            sqlStatement->execute(createStmnt);
+        }
+        catch (sql::SQLException e) {
+            if (runningConfig->getDebug()) {
+            runningLog->sendMsg("createUser() failed. ", e.what());
+            }
+        }
+        return false;
+    }
+
+}
+
+bool SRV_DB::authenticateUser(std::string username, std::string password) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("authenticateUser() failed. Unable to connect to database.");
+            return false;
+        }
+    }
+
+    // Todo: sha512, scrubbing username input for bad stuff (SELECT FROM * DROP *) etc.
+    std::string query = "SELECT password FROM users WHERE user_name='" + username + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
         sqlStatement = connection->createStatement();
         results = sqlStatement->executeQuery(query);
     }
@@ -74,8 +133,8 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
     }
 
     std::string resultPw = resultStr.asStdString();
-
-    if (resultPw.compare(password)) {
+    runningLog->sendMsg("%s", resultPw.c_str());
+    if (resultPw.compare(password) == 0) {
         runningLog->sendMsg("Authentication successful for %s.", username.c_str());
         return true;
     }

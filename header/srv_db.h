@@ -36,6 +36,7 @@ class SRV_DB {
     public:
     SRV_DB(Config* newConfig, Logger* newLog);
     bool getConnectionStatus();
+    bool createUser(std::string username, std::string password, std::string email_address);
     bool authenticateUser(std::string username, std::string password);
 
 };

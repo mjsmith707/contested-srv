@@ -23,7 +23,8 @@ void srv_main() {
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
     SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);
-    srv_db->authenticateUser("test", "password");
+    srv_db->createUser("testing3", "helloworld", "testing3@testing.org");
+    srv_db->authenticateUser("testing3", "helloworld");
     /* presumably threading will be managed in here... */
 
     for(;;) {
