@@ -2,3 +2,6 @@
 *.log
 *.depend
 *.layout
+*.depend
+contested-srv.layout
+contested-srv.depend

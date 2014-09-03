@@ -68,6 +68,7 @@ bool SRV_DB::createUser(std::string username, std::string password, std::string 
         runningLog->sendMsg("SQL: %s", e.what());
         return false;
     }
+
     // Should never get more than one result... if we do were in trouble.
     sql::SQLString resultStr;
     while(results->next()) {
@@ -89,15 +90,15 @@ bool SRV_DB::createUser(std::string username, std::string password, std::string 
             sqlStatement->execute("USE contested;");
             sqlStatement = connection->createStatement();
             sqlStatement->execute(createStmnt);
+            return true;
         }
         catch (sql::SQLException e) {
             if (runningConfig->getDebug()) {
-            runningLog->sendMsg("createUser() failed. ", e.what());
+                runningLog->sendMsg("createUser() failed. %s", e.what());
             }
+            return false;
         }
-        return false;
     }
-
 }
 
 bool SRV_DB::authenticateUser(std::string username, std::string password) {
@@ -126,6 +127,7 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
         runningLog->sendMsg("SQL: %s", e.what());
         return false;
     }
+
     // Should never get more than one result... if we do were in trouble.
     sql::SQLString resultStr;
     while(results->next()) {
@@ -140,6 +142,68 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
     }
     else {
         runningLog->sendMsg("Authentication failed for %s.", username.c_str());
+        return false;
+    }
+}
+
+int SRV_DB::getUserID(std::string username) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
+            return 0;
+        }
+    }
+
+    std::string query = "SELECT user_id FROM users WHERE user_name='" + username + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return 0;
+    }
+
+    // Should never get more than one result... if we do were in trouble.
+    int resultInt = 0;
+    while(results->next()) {
+        resultInt = results->getInt(1);
+    }
+
+    return resultInt;
+}
+
+bool SRV_DB::deleteUser(std::string username, std::string password, std::string email_address) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("deleteUser() failed. Unable to connect to database.");
+            return false;
+        }
+    }
+
+    std::string query = "DELETE FROM users WHERE user_id='" + intToString(getUserID(username)) + "' AND user_name='" + username + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute(query);
+        return true;
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
         return false;
     }
 }

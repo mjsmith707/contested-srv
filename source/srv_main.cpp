@@ -25,10 +25,11 @@ void srv_main() {
     SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);
     srv_db->createUser("testing3", "helloworld", "testing3@testing.org");
     srv_db->authenticateUser("testing3", "helloworld");
+    srv_db->deleteUser("Bogus", "Data", "bogus@data.com");
     /* presumably threading will be managed in here... */
 
     for(;;) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
 }

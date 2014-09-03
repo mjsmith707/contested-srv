@@ -38,6 +38,8 @@ class SRV_DB {
     bool getConnectionStatus();
     bool createUser(std::string username, std::string password, std::string email_address);
     bool authenticateUser(std::string username, std::string password);
+    int getUserID(std::string username);
+    bool deleteUser(std::string username, std::string password, std::string email_address);
 
 };
 
