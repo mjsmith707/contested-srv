@@ -50,6 +50,9 @@ void Config::readConfigFile(std::string fileName) {
             std::string param = "";
             std::getline(cfgFile,param);
             if (param.find("=") == std::string::npos) {
+                if (param.length() == 0) {
+                    continue;
+                }
                 throw std::runtime_error(std::string("Failed to parse config file at line " + intToString(lineNum)));
                 return;
             }
