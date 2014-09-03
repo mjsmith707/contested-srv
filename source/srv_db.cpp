@@ -83,7 +83,7 @@ bool SRV_DB::createUser(std::string username, std::string password, std::string 
         return false;
     }
     else {
-        std::string createStmnt = "INSERT INTO users(user_name, user_score, password, user_email) values('" + username + "','0','" + password + "','" + email_address + "');";
+        std::string createStmnt = "INSERT INTO users(user_name, user_score, password, email_address) values('" + username + "','0','" + password + "','" + email_address + "');";
         try {
             sqlStatement = connection->createStatement();
             sqlStatement->execute("USE contested;");
