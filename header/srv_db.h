@@ -5,6 +5,7 @@
 #include "../header/constants.h"
 #include "../header/config.h"
 #include "../header/logger.h"
+#include <vector>
 
 /* MySQL Connector/C++ specific headers */
 // You must link to mysqlcppcon.so (probably in /usr/lib/)
@@ -24,23 +25,26 @@ class SRV_DB {
     bool connectionStatus;
     Config* runningConfig;
     Logger* runningLog;
-
     sql::Driver *driver;
     sql::Connection *connection;
 
     bool openConnection();
-
-
     std::string intToString(int val);
 
     public:
     SRV_DB(Config* newConfig, Logger* newLog);
+    ~SRV_DB();
+
     bool getConnectionStatus();
     bool createUser(std::string username, std::string password, std::string email_address);
     bool authenticateUser(std::string username, std::string password);
     int getUserID(std::string username);
     bool deleteUser(std::string username, std::string password, std::string email_address);
-
+    bool createContest(std::string username, std::string contest_name, std::string image1);
+    std::vector<std::string> getUserContests(std::string username, unsigned int startPos, unsigned int endPos);
+    int insertImage(std::string username, std::string base64image);
+    std::vector<std::string> getContest(int contestID);
+    std::string getImage(int imageID);
 };
 
 #endif

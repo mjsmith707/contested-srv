@@ -9,6 +9,10 @@ SRV_DB::SRV_DB(Config* newConfig, Logger* newLog) {
     connectionStatus = openConnection();
 }
 
+SRV_DB::~SRV_DB() {
+    // Nothing yet.
+}
+
 bool SRV_DB::openConnection() {
     try {
         driver = get_driver_instance();
@@ -129,12 +133,11 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
     }
 
     // Should never get more than one result... if we do were in trouble.
-    sql::SQLString resultStr;
+    sql::SQLString resultPw;
     while(results->next()) {
-        resultStr = results->getString(1);
+        resultPw = results->getString(1);
     }
 
-    runningLog->sendMsg("%s", resultPw.c_str());
     if (resultPw.compare(password) == 0) {
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("Authentication successful for %s.", username.c_str());
@@ -184,6 +187,7 @@ int SRV_DB::getUserID(std::string username) {
     return resultInt;
 }
 
+// Todo: Delete all contests/images associated with user
 bool SRV_DB::deleteUser(std::string username, std::string password, std::string email_address) {
     if (!connectionStatus) {
         if(!openConnection()) {
@@ -217,4 +221,228 @@ bool SRV_DB::deleteUser(std::string username, std::string password, std::string 
         runningLog->sendMsg("SQL: %s", e.what());
         return false;
     }
+}
+
+bool SRV_DB::createContest(std::string username, std::string contest_name, std::string image1) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
+            return false;
+        }
+    }
+
+    int userid = getUserID(username);
+    if (userid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
+        }
+        return false;
+    }
+
+    int imageid = insertImage(username, image1);
+    if (imageid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("createContest() failed. Couldn't insert image.");
+        }
+        return false;
+    }
+
+    std::string query = "INSERT INTO contest(user1, name, image1) values('" + intToString(userid) + "','" + contest_name + "','" + intToString(imageid) + "');";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return false;
+    }
+
+    return true;
+}
+
+std::vector<std::string> SRV_DB::getUserContests(std::string username, unsigned int startPos, unsigned int endPos) {
+    std::vector<std::string> resultVctr;
+
+    if (endPos < startPos) {
+        runningLog->sendMsg("getUserContests() failed. endPos is smaller than startPos.");
+        return resultVctr;
+    }
+
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getUserContests() failed. Unable to connect to database.");
+            return resultVctr;
+        }
+    }
+
+    int userid = getUserID(username);
+    if (userid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
+        }
+        return resultVctr;
+    }
+
+    std::string query = "SELECT * FROM contest WHERE user1='" + intToString(userid) + "' OR user2='" + intToString(userid) + "' LIMIT " + intToString(startPos) + "," + intToString(endPos) + ";";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return resultVctr;
+    }
+
+    sql::SQLString resultStr;
+    unsigned int i=0;
+    unsigned int limit = endPos - startPos;
+    while(results->next() && (i<limit)) {
+        resultVctr.push_back(results->getString(1));
+        resultVctr.push_back(results->getString(2));
+        resultVctr.push_back(results->getString(3));
+        resultVctr.push_back(results->getString(4));
+        resultVctr.push_back(results->getString(5));
+        resultVctr.push_back(results->getString(6));
+        resultVctr.push_back(results->getString(7));
+        resultVctr.push_back(results->getString(8));
+        i++;
+    }
+    return resultVctr;
+}
+
+int SRV_DB::insertImage(std::string username, std::string base64image) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("insertImage() failed. Unable to connect to database.");
+            return 0;
+        }
+    }
+
+    int userid = getUserID(username);
+    if (userid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
+        }
+        return 0;
+    }
+
+    std::string query = "INSERT INTO images(owner_id, image) values('" + intToString(userid) + "','" + base64image + "');";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute(query);
+        results = sqlStatement->executeQuery("SELECT LAST_INSERT_ID();");
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return 0;
+    }
+
+    int resultInt = 0;
+    while(results->next()) {
+        resultInt = results->getInt(1);
+    }
+
+    return resultInt;
+}
+
+std::vector<std::string> SRV_DB::getContest(int contestID) {
+    std::vector<std::string> resultVctr;
+
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getContest() failed. Unable to connect to database.");
+            return resultVctr;
+        }
+    }
+
+    std::string query = "SELECT * FROM contest WHERE contest_id='" + intToString(contestID) + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return resultVctr;
+    }
+
+    sql::SQLString resultStr;
+    while(results->next()) {
+        resultVctr.push_back(results->getString(1));
+        resultVctr.push_back(results->getString(2));
+        resultVctr.push_back(results->getString(3));
+        resultVctr.push_back(results->getString(4));
+        resultVctr.push_back(results->getString(5));
+        resultVctr.push_back(results->getString(6));
+        resultVctr.push_back(getImage(results->getInt(7)));
+        resultVctr.push_back(getImage(results->getInt(8)));
+    }
+
+    return resultVctr;
+}
+
+std::string SRV_DB::getImage(int imageID) {
+    std::string resultString = "NULL";
+
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getImage() failed. Unable to connect to database.");
+            return resultString;
+        }
+    }
+
+    std::string query = "SELECT image FROM images WHERE image_id='" + intToString(imageID) + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return resultString;
+    }
+
+    sql::SQLString resultStr;
+    while(results->next()) {
+        resultStr = results->getString(1);
+    }
+
+    return resultStr.asStdString();
 }
