@@ -54,7 +54,6 @@ void Config::readConfigFile(std::string fileName) {
                 if (param.length() == 0) {
                     continue;
                 }
-                std::cout << "didnt continue..";
                 throw std::runtime_error(std::string("Failed to parse config file at line " + intToString(lineNum)));
                 return;
             }
@@ -84,7 +83,6 @@ void Config::readConfigFile(std::string fileName) {
                     Daemon = false;
                 }
                 else {
-                std::cout << "token2: " << token << "val: " << val << std::endl;
                     throw std::runtime_error(std::string("Failed to parse config file at line " + intToString(lineNum)));
                 }
             }
@@ -110,7 +108,6 @@ void Config::readConfigFile(std::string fileName) {
                 SQLPassword = val;
             }
             else {
-            std::cout << "token3: " << token << "val: " << val << std::endl;
                 throw std::runtime_error(std::string("Failed to parse config file at line " + intToString(lineNum)));
             }
         } while (!cfgFile.eof());
