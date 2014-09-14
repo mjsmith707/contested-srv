@@ -3,10 +3,17 @@
 #include "../header/config.h"
 #include "../header/logger.h"
 #include "../header/srv_db.h"
+#include "../header/server.h"
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <pthread.h>
+#include <signal.h>
 using namespace std;
 
 void srv_main();
@@ -27,34 +34,39 @@ void srv_main() {
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
     SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);
-    srv_db->createUser("testing3", "helloworld", "testing3@testing.org");
-    srv_db->authenticateUser("testing3", "helloworld");
-    //srv_db->deleteUser("Bogus", "Data", "bogus@data.com");
-    //srv_db->createContest("testing3", "This is a test of the contest system", "base64imageislocatedhere");
-    std::vector<std::string> results = srv_db->getContest(53);
 
-    std::cout << "====RESULTS====" << std::endl;
-    for (int i=0; i<results.size(); i++) {
-        std::cout << results.at(i) << std::endl;
+    try {
+        // Block all signals for background thread.
+        sigset_t new_mask;
+        sigfillset(&new_mask);
+        sigset_t old_mask;
+        pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask);
+
+        // Run server in background thread.
+        std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
+        http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads);
+        boost::thread http_main_thread(boost::bind(&http::server3::server::run, &http_main));
+
+        // Restore previous signals.
+        pthread_sigmask(SIG_SETMASK, &old_mask, 0);
+
+        // Wait for signal indicating time to shut down.
+        sigset_t wait_mask;
+        sigemptyset(&wait_mask);
+        sigaddset(&wait_mask, SIGINT);
+        sigaddset(&wait_mask, SIGQUIT);
+        sigaddset(&wait_mask, SIGTERM);
+        pthread_sigmask(SIG_BLOCK, &wait_mask, 0);
+        int sig = 0;
+        sigwait(&wait_mask, &sig);
+
+        // Stop the server.
+        http_main.stop();
+        http_main_thread.join();
     }
-    /* presumably threading will be managed in here... */
-
-    //std::vector<std::thread> threadPool;
-    //std::vector<SRV_DB*> dbPool;
-    //for (int i=0; i<100; i++) {
-    //    dbPool.push_back(new SRV_DB(runningConfig, runningLog));
-    //}
-
-    //for (int i=0; i<100; i++) {
-    //    threadPool.push_back(std::thread (&createContestWrapper,dbPool.at(i), "testing3", "This is a test of the contest system #" + intToString(i), "base64imageislocatedhere"));
-    //}
-
-    //join_all(threadPool);
-
-    for(;;) {
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    catch (std::exception& e) {
+        runningLog->sendMsg("%s", e.what());
     }
-
 }
 
 void join_all(std::vector<std::thread>& v)

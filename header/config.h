@@ -15,6 +15,7 @@ class Config {
     bool Daemon;
     unsigned int Port;
     unsigned int SQLPort;
+    unsigned int httpThreads;
     std::string ListenAddress;
     std::string LogFile;
     std::string ConfigFile;
@@ -34,6 +35,7 @@ class Config {
     bool getDaemon();
     unsigned int getPort();
     unsigned int getSqlPort();
+    unsigned int getHttpThreads();
     std::string getListenAddress();
     std::string getLogFile();
     std::string getConfigFile();
@@ -44,6 +46,7 @@ class Config {
     void setDaemon(bool val);
     void setPort(unsigned int val);
     void setSqlPort(unsigned int val);
+    void setHttpThreads(unsigned int val);
     void setListenAddress(std::string address);
     void setLogFile(std::string logFile);
     void setConfigFile(std::string cfgFile);
