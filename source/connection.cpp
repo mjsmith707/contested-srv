@@ -17,8 +17,10 @@ namespace http {
 namespace server3 {
 
 connection::connection(boost::asio::io_service& io_service,
-    request_handler& handler)
-  : strand_(io_service),
+    request_handler& handler, Config* config, Logger* log)
+  : runningConfig(config),
+    runningLog(log),
+    strand_(io_service),
     socket_(io_service),
     request_handler_(handler)
 {
@@ -45,7 +47,7 @@ void connection::handle_read(const boost::system::error_code& e,
   {
     boost::tribool result;
     boost::tie(result, boost::tuples::ignore) = request_parser_.parse(
-        request_, buffer_.data(), buffer_.data() + bytes_transferred);
+        request_, buffer_.data(), buffer_.data() + bytes_transferred, runningConfig, runningLog);
 
     if (result)
     {

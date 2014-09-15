@@ -13,6 +13,10 @@
 
 #include <boost/logic/tribool.hpp>
 #include <boost/tuple/tuple.hpp>
+#include "../header/constants.h"
+#include "../header/config.h"
+#include "../header/logger.h"
+#include <iostream>
 
 namespace http {
 namespace server3 {
@@ -33,24 +37,29 @@ public:
   /// has been parsed, false if the data is invalid, indeterminate when more
   /// data is required. The InputIterator return value indicates how much of the
   /// input has been consumed.
+  // I absolutely hate inline code in header files. This needs to be changed badly
   template <typename InputIterator>
   boost::tuple<boost::tribool, InputIterator> parse(request& req,
-      InputIterator begin, InputIterator end)
+      InputIterator begin, InputIterator end, Config* runningConfig, Logger* runningLog)
   {
-    while (begin != end)
-    {
-      boost::tribool result = consume(req, *begin++);
-      if (result || !result)
+    std::string test;
+    while (begin != end) {
+        test += *begin++;
+    }
+
+    boost::tribool result = newParser(req, test, runningConfig, runningLog);
+    if (result || !result) {
         return boost::make_tuple(result, begin);
     }
-    boost::tribool result = boost::indeterminate;
+
+    result = boost::indeterminate;
     return boost::make_tuple(result, begin);
   }
 
 private:
   /// Handle the next character of input.
   boost::tribool consume(request& req, char input);
-
+  boost::tribool newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog);
   /// Check if a byte is an HTTP character.
   static bool is_char(int c);
 

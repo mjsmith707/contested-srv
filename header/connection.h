@@ -20,6 +20,9 @@
 #include "../header/request.h"
 #include "../header/request_handler.h"
 #include "../header/request_parser.h"
+#include "../header/constants.h"
+#include "../header/config.h"
+#include "../header/logger.h"
 
 namespace http {
 namespace server3 {
@@ -32,7 +35,7 @@ class connection
 public:
   /// Construct a connection with the given io_service.
   explicit connection(boost::asio::io_service& io_service,
-      request_handler& handler);
+      request_handler& handler, Config* config, Logger* log);
 
   /// Get the socket associated with the connection.
   boost::asio::ip::tcp::socket& socket();
@@ -41,6 +44,8 @@ public:
   void start();
 
 private:
+    Config* runningConfig;
+    Logger* runningLog;
   /// Handle completion of a read operation.
   void handle_read(const boost::system::error_code& e,
       std::size_t bytes_transferred);

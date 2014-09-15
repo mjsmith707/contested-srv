@@ -3,12 +3,13 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="contested-srv" />
+		<Option execution_dir="../contested-srv" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/contested-srv" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/bin/Debug" />
+				<Option working_dir="./bin/Debug" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -36,15 +37,35 @@
 		</Compiler>
 		<Linker>
 			<Add library="/usr/lib/libmysqlcppconn.so" />
+			<Add library="/usr/lib64/libpthread.so" />
+			<Add library="/usr/lib64/libboost_system.so" />
+			<Add library="/usr/lib64/libboost_thread.so" />
+			<Add library="/usr/lib64/libjsoncpp.so" />
 		</Linker>
 		<Unit filename="header/config.h" />
+		<Unit filename="header/connection.h" />
 		<Unit filename="header/constants.h" />
+		<Unit filename="header/header.h" />
 		<Unit filename="header/logger.h" />
+		<Unit filename="header/mime_types.h" />
+		<Unit filename="header/reply.h" />
+		<Unit filename="header/request.h" />
+		<Unit filename="header/request_handler.h" />
+		<Unit filename="header/request_parser.h" />
+		<Unit filename="header/server.h" />
 		<Unit filename="header/srv_db.h" />
+		<Unit filename="header/srv_net.h" />
 		<Unit filename="source/config.cpp" />
+		<Unit filename="source/connection.cpp" />
 		<Unit filename="source/logger.cpp" />
+		<Unit filename="source/mime_types.cpp" />
+		<Unit filename="source/reply.cpp" />
+		<Unit filename="source/request_handler.cpp" />
+		<Unit filename="source/request_parser.cpp" />
+		<Unit filename="source/server.cpp" />
 		<Unit filename="source/srv_db.cpp" />
 		<Unit filename="source/srv_main.cpp" />
+		<Unit filename="source/srv_net.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

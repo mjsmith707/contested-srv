@@ -24,13 +24,14 @@ std::string intToString(int val);
 static void createContestWrapper(const void* dbPtr, std::string username, std::string description, std::string base64image);
 
 int main (int argc, char* argv[]) {
+    std::cout << "cwd: " << argv[0] << std::endl;
     srv_main();
 
     return 0;
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("srv.cfg");
+    Config* runningConfig = new Config("./bin/Debug/srv.cfg");
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
     SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);
@@ -44,7 +45,7 @@ void srv_main() {
 
         // Run server in background thread.
         std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
-        http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads);
+        http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads, runningConfig, runningLog);
         boost::thread http_main_thread(boost::bind(&http::server3::server::run, &http_main));
 
         // Restore previous signals.

@@ -10,6 +10,10 @@
 
 #include "../header/request_parser.h"
 #include "../header/request.h"
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <jsoncpp/json/json.h>
 
 namespace http {
 namespace server3 {
@@ -22,6 +26,92 @@ request_parser::request_parser()
 void request_parser::reset()
 {
   state_ = method_start;
+}
+
+boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
+    std::vector<std::string> inputVctr;
+    std::stringstream inputStream(input);
+    std::string temp;
+    while (std::getline(inputStream, temp)) {
+        inputVctr.push_back(temp);
+    }
+
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("Parser Input:");
+        for (unsigned int i=0; i<inputVctr.size(); i++) {
+            runningLog->sendMsg("%s", inputVctr[i].c_str());
+        }
+        runningLog->sendMsg("=End Parser Input=");
+    }
+
+    size_t postHeader = inputVctr[0].find("POST / HTTP/1.1", 0);
+    if ((postHeader != std::string::npos) && (postHeader == 0)) {
+        req.method = "POST";
+        req.uri = "/";
+        req.http_version_major = 1;
+        req.http_version_minor = 1;
+    }
+    else {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("postHeader parse failed.");
+        }
+        return false;
+    }
+
+    size_t hostHeader = inputVctr[1].find("Host: ", 0);
+    if ((hostHeader == std::string::npos) || (hostHeader != 0)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("hostHeader parse failed.");
+        }
+        return false;
+    }
+
+    size_t contentLengthHeader = inputVctr[2].find("Content-Length: ", 0);
+    if ((contentLengthHeader != std::string::npos) && (contentLengthHeader == 0)) {
+        // Should use the content length but meh fuck it
+        // What could possibly go wrong (sorry Grant)
+    }
+    else {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("contentLengthheader parse failed.");
+        }
+        return false;
+    }
+
+    size_t contentTypeHeader = inputVctr[3].find("Content-Type: application/json", 0);
+    if ((contentTypeHeader == std::string::npos) || (contentTypeHeader != 0)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("contentTypeHeader parse failed.");
+        }
+        return false;
+    }
+
+    // Rebuild json object
+
+    Json::Value root;
+    Json::Reader jsonObject;
+    bool jsonParsed = jsonObject.parse(inputVctr[5], root);
+    if (!jsonParsed) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("JSON Object parse failed.");
+        }
+        return false;
+    }
+
+    const Json::Value username = root["username"];
+    req.username = username.asString();
+
+    const Json::Value password = root["password"];
+    req.password = password.asString();
+
+    const Json::Value requestid = root["requestid"];
+    req.requestid = requestid.asString();
+
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str());
+    }
+
+    return true;
 }
 
 boost::tribool request_parser::consume(request& req, char input)

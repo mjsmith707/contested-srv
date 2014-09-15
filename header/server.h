@@ -18,6 +18,9 @@
 #include <boost/shared_ptr.hpp>
 #include "../header/connection.h"
 #include "../header/request_handler.h"
+#include "../header/constants.h"
+#include "../header/config.h"
+#include "../header/logger.h"
 
 namespace http {
 namespace server3 {
@@ -30,7 +33,7 @@ public:
   /// Construct the server to listen on the specified TCP address and port, and
   /// serve up files from the given directory.
   explicit server(const std::string& address, const std::string& port,
-      const std::string& doc_root, std::size_t thread_pool_size);
+      const std::string& doc_root, std::size_t thread_pool_size, Config* config, Logger* log);
 
   /// Run the server's io_service loop.
   void run();
@@ -39,6 +42,8 @@ public:
   void stop();
 
 private:
+    Config* runningConfig;
+    Logger* runningLog;
   /// Handle completion of an asynchronous accept operation.
   void handle_accept(const boost::system::error_code& e);
 
