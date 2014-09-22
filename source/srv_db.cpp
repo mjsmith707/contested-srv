@@ -47,7 +47,7 @@ bool SRV_DB::getConnectionStatus() {
     return connectionStatus;
 }
 
-bool SRV_DB::createUser(std::string username, std::string password, std::string email_address) {
+bool SRV_DB::createUser(std::string& username, std::string& password, std::string& email_address) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("createUser() failed. Unable to connect to database.");
@@ -152,7 +152,7 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
     }
 }
 
-int SRV_DB::getUserID(std::string username) {
+int SRV_DB::getUserID(std::string& username) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
@@ -187,8 +187,43 @@ int SRV_DB::getUserID(std::string username) {
     return resultInt;
 }
 
+std::string SRV_DB::getUsername(int userid) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
+            return 0;
+        }
+    }
+
+    std::string query = "SELECT user_name FROM users WHERE user_id='" + intToString(userid) + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+
+    sql::Statement* sqlStatement;
+    sql::ResultSet* results;
+    try {
+        sqlStatement = connection->createStatement();
+        sqlStatement->execute("USE contested;");
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query);
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return 0;
+    }
+
+    // Should never get more than one result... if we do were in trouble.
+    std::string result;
+    while(results->next()) {
+        result = results->getString(1);
+    }
+
+    return result;
+}
+
 // Todo: Delete all contests/images associated with user
-bool SRV_DB::deleteUser(std::string username, std::string password, std::string email_address) {
+bool SRV_DB::deleteUser(std::string& username, std::string& password, std::string& email_address) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("deleteUser() failed. Unable to connect to database.");
@@ -223,7 +258,7 @@ bool SRV_DB::deleteUser(std::string username, std::string password, std::string 
     }
 }
 
-bool SRV_DB::createContest(std::string username, std::string contest_name, std::string image1) {
+bool SRV_DB::createContest(std::string& username, std::string& contest_name, std::string& image1) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
@@ -267,18 +302,20 @@ bool SRV_DB::createContest(std::string username, std::string contest_name, std::
     return true;
 }
 
-std::vector<std::string> SRV_DB::getUserContests(std::string username, unsigned int startPos, unsigned int endPos) {
-    std::vector<std::string> resultVctr;
+std::string SRV_DB::getUserContests(std::string username, unsigned int startPos, unsigned int endPos) {
+    Json::Value event;
 
     if (endPos < startPos) {
         runningLog->sendMsg("getUserContests() failed. endPos is smaller than startPos.");
-        return resultVctr;
+        event["error"] = "Ending position smaller than starting position";
+        return event.toStyledString();
     }
 
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserContests() failed. Unable to connect to database.");
-            return resultVctr;
+            event["error"] = "Unable to connect to database.";
+            return event.toStyledString();
         }
     }
 
@@ -287,7 +324,8 @@ std::vector<std::string> SRV_DB::getUserContests(std::string username, unsigned 
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
         }
-        return resultVctr;
+        event["error"] = "Username does not exist";
+        return event.toStyledString();
     }
 
     std::string query = "SELECT * FROM contest WHERE user1='" + intToString(userid) + "' OR user2='" + intToString(userid) + "' LIMIT " + intToString(startPos) + "," + intToString(endPos) + ";";
@@ -305,27 +343,28 @@ std::vector<std::string> SRV_DB::getUserContests(std::string username, unsigned 
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        return resultVctr;
+        event["error"] = e.what();
+        return event.toStyledString();
     }
 
-    sql::SQLString resultStr;
     unsigned int i=0;
     unsigned int limit = endPos - startPos;
+
     while(results->next() && (i<limit)) {
-        resultVctr.push_back(results->getString(1));
-        resultVctr.push_back(results->getString(2));
-        resultVctr.push_back(results->getString(3));
-        resultVctr.push_back(results->getString(4));
-        resultVctr.push_back(results->getString(5));
-        resultVctr.push_back(results->getString(6));
-        resultVctr.push_back(results->getString(7));
-        resultVctr.push_back(results->getString(8));
+        event["contests"][i]["contestID"] = results->getString(1).asStdString();
+        event["contests"][i]["userOneID"] = results->getString(2).asStdString();
+        event["contests"][i]["userTwoID"] = results->getString(3).asStdString();
+        event["contests"][i]["contestName"] = results->getString(4).asStdString();
+        event["contests"][i]["image1"] = getImage(results->getInt(7));
+        event["contests"][i]["image2"] = getImage(results->getInt(8));
+        event["contests"][i]["userOne"] = getUsername(results->getInt(1));
+        event["contests"][i]["userTwo"] = getUsername(results->getInt(2));
         i++;
     }
-    return resultVctr;
+    return event.toStyledString();
 }
 
-int SRV_DB::insertImage(std::string username, std::string base64image) {
+int SRV_DB::insertImage(std::string& username, std::string& base64image) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("insertImage() failed. Unable to connect to database.");
@@ -368,13 +407,14 @@ int SRV_DB::insertImage(std::string username, std::string base64image) {
     return resultInt;
 }
 
-std::vector<std::string> SRV_DB::getContest(int contestID) {
-    std::vector<std::string> resultVctr;
+std::string SRV_DB::getContest(int contestID) {
+    Json::Value event;
 
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getContest() failed. Unable to connect to database.");
-            return resultVctr;
+            event["error"] = "Unable to connect to database.";
+            return event.toStyledString();
         }
     }
 
@@ -393,22 +433,24 @@ std::vector<std::string> SRV_DB::getContest(int contestID) {
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        return resultVctr;
+        event["error"] = e.what();
+        return event.toStyledString();
     }
 
-    sql::SQLString resultStr;
     while(results->next()) {
-        resultVctr.push_back(results->getString(1));
-        resultVctr.push_back(results->getString(2));
-        resultVctr.push_back(results->getString(3));
-        resultVctr.push_back(results->getString(4));
-        resultVctr.push_back(results->getString(5));
-        resultVctr.push_back(results->getString(6));
-        resultVctr.push_back(getImage(results->getInt(7)));
-        resultVctr.push_back(getImage(results->getInt(8)));
+        event["contest"]["contestID"] = results->getString(1).asStdString();
+        event["contest"]["userOneID"] = results->getInt(2);
+        event["contest"]["userTwoID"] = results->getInt(3);
+        event["contest"]["contestName"] = results->getString(4).asStdString();
+        event["contest"]["image1"] = getImage(results->getInt(7));
+        event["contest"]["image2"] = getImage(results->getInt(8));
+        event["contest"]["userOne"] = getUsername(results->getInt(2));
+        event["contest"]["userTwo"] = getUsername(results->getInt(3));
+        event["contest"]["userOneScore"] = results->getString(5).asStdString();
+        event["contest"]["userTwoScore"] = results->getString(6).asStdString();
     }
 
-    return resultVctr;
+    return event.toStyledString();
 }
 
 std::string SRV_DB::getImage(int imageID) {
@@ -419,6 +461,10 @@ std::string SRV_DB::getImage(int imageID) {
             runningLog->sendMsg("getImage() failed. Unable to connect to database.");
             return resultString;
         }
+    }
+
+    if (imageID == 0) {
+        return resultString;
     }
 
     std::string query = "SELECT image FROM images WHERE image_id='" + intToString(imageID) + "';";

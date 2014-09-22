@@ -46,6 +46,7 @@ public:
 private:
     Config* runningConfig;
     Logger* runningLog;
+    SRV_DB* srvDB;
   /// Handle completion of a read operation.
   void handle_read(const boost::system::error_code& e,
       std::size_t bytes_transferred);

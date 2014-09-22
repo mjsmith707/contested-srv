@@ -31,7 +31,7 @@ int main (int argc, char* argv[]) {
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("./bin/Debug/srv.cfg");
+    Config* runningConfig = new Config("./srv.cfg");
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
     SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);

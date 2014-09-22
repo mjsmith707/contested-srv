@@ -26,9 +26,13 @@ struct request
   int http_version_major;
   int http_version_minor;
   std::vector<header> headers;
+
   std::string username;
   std::string password;
   std::string requestid;
+  std::string reqparam1;
+  std::string reqparam2;
+  std::string reqparam3;
 };
 
 } // namespace server3

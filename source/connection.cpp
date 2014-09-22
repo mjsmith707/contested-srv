@@ -24,6 +24,7 @@ connection::connection(boost::asio::io_service& io_service,
     socket_(io_service),
     request_handler_(handler)
 {
+    srvDB = new SRV_DB(config, log);
 }
 
 boost::asio::ip::tcp::socket& connection::socket()
@@ -51,7 +52,7 @@ void connection::handle_read(const boost::system::error_code& e,
 
     if (result)
     {
-      request_handler_.handle_request(request_, reply_);
+      request_handler_.handle_request(request_, reply_, runningConfig, runningLog, srvDB);
       boost::asio::async_write(socket_, reply_.to_buffers(),
           strand_.wrap(
             boost::bind(&connection::handle_write, shared_from_this(),

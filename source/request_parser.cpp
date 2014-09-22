@@ -29,6 +29,9 @@ void request_parser::reset()
 }
 
 boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
+    // Some stupid stuff is happening in here
+    // Splitting single string into vector here
+    // Then rejoining it to a single string later for json eh...
     std::vector<std::string> inputVctr;
     std::stringstream inputStream(input);
     std::string temp;
@@ -87,10 +90,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
     }
 
     // Rebuild json object
-
     Json::Value root;
     Json::Reader jsonObject;
-    bool jsonParsed = jsonObject.parse(inputVctr[5], root);
+    std::string jsonRequest;
+    for (unsigned int i=4; i<inputVctr.size(); i++) {
+        jsonRequest += inputVctr.at(i);
+    }
+    bool jsonParsed = jsonObject.parse(jsonRequest, root);
     if (!jsonParsed) {
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("JSON Object parse failed.");
@@ -99,16 +105,27 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
     }
 
     const Json::Value username = root["username"];
-    req.username = username.asString();
-
     const Json::Value password = root["password"];
-    req.password = password.asString();
-
     const Json::Value requestid = root["requestid"];
+    const Json::Value reqparam1 = root["reqparam1"];
+    const Json::Value reqparam2 = root["reqparam2"];
+    const Json::Value reqparam3 = root["reqparam3"];
+    if (username.empty() || password.empty() || requestid.empty()) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("JSON Object parse failed.");
+        }
+        return false;
+    }
+
+    req.username = username.asString();
+    req.password = password.asString();
     req.requestid = requestid.asString();
+    req.reqparam1 = reqparam1.asString();
+    req.reqparam2 = reqparam2.asString();
+    req.reqparam3 = reqparam3.asString();
 
     if (runningConfig->getDebug()) {
-        runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str());
+        runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str());
     }
 
     return true;
