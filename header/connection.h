@@ -37,6 +37,7 @@ public:
   explicit connection(boost::asio::io_service& io_service,
       request_handler& handler, Config* config, Logger* log);
 
+  ~connection();
   /// Get the socket associated with the connection.
   boost::asio::ip::tcp::socket& socket();
 

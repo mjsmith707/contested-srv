@@ -21,7 +21,6 @@ void initializeLogging(Config* runningConfig, Logger* runningLog);
 void join_all(std::vector<std::thread>& v);
 void do_join(std::thread& t);
 std::string intToString(int val);
-static void createContestWrapper(const void* dbPtr, std::string username, std::string description, std::string base64image);
 
 int main (int argc, char* argv[]) {
     std::cout << "cwd: " << argv[0] << std::endl;
@@ -31,10 +30,9 @@ int main (int argc, char* argv[]) {
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("./srv.cfg");
+    Config* runningConfig = new Config("./bin/Debug/srv.cfg");
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
-    SRV_DB* srv_db = new SRV_DB(runningConfig, runningLog);
 
     try {
         // Block all signals for background thread.
@@ -86,11 +84,6 @@ std::string intToString(int val) {
     sprintf(tmpstr, "%d", val);
     str = tmpstr;
     return str;
-}
-
-static void createContestWrapper(const void* dbPtr, std::string username, std::string description, std::string base64image) {
-    SRV_DB* srv_db = (SRV_DB*)dbPtr;
-    srv_db->createContest(username, description, base64image);
 }
 
 void initializeLogging(Config* runningConfig, Logger* runningLog) {

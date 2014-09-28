@@ -37,14 +37,15 @@ class SRV_DB {
     ~SRV_DB();
 
     bool getConnectionStatus();
-    bool createUser(std::string& username, std::string& password, std::string& email_address);
+    int createUser(std::string username, std::string password, std::string email_address);
     bool authenticateUser(std::string username, std::string password);
     int getUserID(std::string& username);
     std::string getUsername(int userid);
     bool deleteUser(std::string& username, std::string& password, std::string& email_address);
-    bool createContest(std::string& username, std::string& contest_name, std::string& image1);
+    std::string createContest(std::string username, std::string contest_name);
     std::string getUserContests(std::string username, unsigned int startPos, unsigned int endPos);
-    int insertImage(std::string& username, std::string& base64image);
+    bool updateImage(std::string username, int contestID, std::string image, int imgslot);
+    int insertImage(std::string username, std::string base64image);
     std::string getContest(int contestID);
     std::string getImage(int imageID);
 };

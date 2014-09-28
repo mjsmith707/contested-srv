@@ -61,15 +61,23 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         return false;
     }
 
-    size_t hostHeader = inputVctr[1].find("Host: ", 0);
-    if ((hostHeader == std::string::npos) || (hostHeader != 0)) {
+    size_t contentTypeHeader = inputVctr[1].find("Content-Type: application/json", 0);
+    if ((contentTypeHeader == std::string::npos) || (contentTypeHeader != 0)) {
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("hostHeader parse failed.");
+            runningLog->sendMsg("contentTypeHeader parse failed.");
         }
         return false;
     }
 
-    size_t contentLengthHeader = inputVctr[2].find("Content-Length: ", 0);
+    size_t acceptHeader = inputVctr[2].find("Accept: application/json", 0);
+    if ((acceptHeader == std::string::npos) || (acceptHeader != 0)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("acceptHeader parse failed.");
+        }
+        return false;
+    }
+
+    size_t contentLengthHeader = inputVctr[3].find("Content-Length: ", 0);
     if ((contentLengthHeader != std::string::npos) && (contentLengthHeader == 0)) {
         // Should use the content length but meh fuck it
         // What could possibly go wrong (sorry Grant)
@@ -81,10 +89,26 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         return false;
     }
 
-    size_t contentTypeHeader = inputVctr[3].find("Content-Type: application/json", 0);
-    if ((contentTypeHeader == std::string::npos) || (contentTypeHeader != 0)) {
+    size_t hostHeader = inputVctr[4].find("Host: ", 0);
+    if ((hostHeader == std::string::npos) || (hostHeader != 0)) {
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("contentTypeHeader parse failed.");
+            runningLog->sendMsg("hostHeader parse failed.");
+        }
+        return false;
+    }
+
+    size_t keepaliveHeader = inputVctr[5].find("Connection: Keep-Alive", 0);
+    if ((keepaliveHeader == std::string::npos) || (keepaliveHeader != 0)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("keepaliveHeader parse failed.");
+        }
+        return false;
+    }
+
+    size_t agentHeader = inputVctr[6].find("User-Agent: ", 0);
+    if ((agentHeader == std::string::npos) || (agentHeader != 0)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("userAgent parse failed.");
         }
         return false;
     }
@@ -93,7 +117,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
     Json::Value root;
     Json::Reader jsonObject;
     std::string jsonRequest;
-    for (unsigned int i=4; i<inputVctr.size(); i++) {
+    for (unsigned int i=7; i<inputVctr.size(); i++) {
         jsonRequest += inputVctr.at(i);
     }
     bool jsonParsed = jsonObject.parse(jsonRequest, root);
@@ -407,7 +431,7 @@ bool request_parser::is_char(int c)
 
 bool request_parser::is_ctl(int c)
 {
-  return c >= 0 && c <= 31 || c == 127;
+  return (((c >= 0) && (c <= 31)) || (c == 127));
 }
 
 bool request_parser::is_tspecial(int c)

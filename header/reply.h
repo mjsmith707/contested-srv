@@ -40,7 +40,18 @@ struct reply
     internal_server_error = 500,
     not_implemented = 501,
     bad_gateway = 502,
-    service_unavailable = 503
+    service_unavailable = 503,
+    json_true = 1000,
+    json_false = 1001,
+    json_db_connect_failed = 1002,
+    json_db_bad_sql = 1003,
+    json_empty_parameter = 1004,
+    json_user_create_success = 1005,
+    json_user_create_exists = 1006,
+    json_bad_request = 1007,
+    json_duplicate_email = 1008,
+    json_auth_success = 1009,
+    json_auth_fail = 1010
   } status;
 
   /// The headers to be included in the reply.
@@ -56,6 +67,7 @@ struct reply
 
   /// Get a stock reply.
   static reply stock_reply(status_type status);
+  static reply json_reply(status_type status);
 };
 
 } // namespace server3

@@ -34,14 +34,37 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
         return;
     }
     std::string results;
-
-    if (srvDB->authenticateUser(req.username, req.password)) {
+    // User account creation
+    if (req.requestid.compare("createuser") == 0) {
+        if (req.reqparam1.empty()) {
+                rep = reply::json_reply(reply::json_empty_parameter);
+                return;
+        }
+        int dbResult = srvDB->createUser(req.username, req.password, req.reqparam1);
+        rep = reply::json_reply((reply::status_type)dbResult);
+    }
+    else if (req.requestid.compare("authenticate") == 0) {
+        if (srvDB->authenticateUser(req.username, req.password)) {
+            rep = reply::json_reply(reply::json_auth_success);
+        }
+        else {
+            rep = reply::json_reply(reply::json_auth_fail);
+        }
+    }
+    // Authenticated commands
+    else if (srvDB->authenticateUser(req.username, req.password)) {
         if (req.requestid.compare("getmycontests") == 0) {
-            results = srvDB->getUserContests(req.username, 0, 10000);
+            try {
+                results = srvDB->getUserContests(req.username, 0, 10000);
+            }
+            catch (std::exception e) {
+                rep = reply::json_reply(reply::json_db_bad_sql);
+                return;
+            }
         }
         else if (req.requestid.compare("getcontest") == 0) {
             if (req.reqparam1.empty()) {
-                rep = reply::stock_reply(reply::bad_request);
+                rep = reply::json_reply(reply::json_empty_parameter);
                 return;
             }
             try {
@@ -49,12 +72,42 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                 results = srvDB->getContest(contestid);
             }
             catch (std::exception e) {
-                rep = reply::stock_reply(reply::bad_request);
+                rep = reply::json_reply(reply::json_db_bad_sql);
+                return;
+            }
+        }
+        else if (req.requestid.compare("createcontest") == 0) {
+            if (req.reqparam1.empty()) {
+                rep = reply::json_reply(reply::json_empty_parameter);
+                return;
+            }
+            try {
+                results = srvDB->createContest(req.username, req.reqparam1);
+                runningLog->sendMsg("createContest results = %s", results.c_str());
+            }
+            catch (std::exception e) {
+                rep = reply::json_reply(reply::json_db_bad_sql);
+                return;
+            }
+        }
+        else if (req.requestid.compare("updateimage") == 0) {
+            if (req.reqparam1.empty()) {
+                rep = reply::json_reply(reply::json_empty_parameter);
+                return;
+            }
+            try {
+                // username, contestid, base64image, slot (1st or 2nd)
+                int contestid = stoi(req.reqparam1);
+                int slot = stoi(req.reqparam3);
+                results = srvDB->updateImage(req.username, contestid, req.reqparam2, slot);
+            }
+            catch (std::exception e) {
+                rep = reply::json_reply(reply::json_db_bad_sql);
                 return;
             }
         }
         else {
-            rep = reply::stock_reply(reply::bad_request);
+            rep = reply::json_reply(reply::json_bad_request);
             return;
         }
     }

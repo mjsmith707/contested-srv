@@ -27,6 +27,10 @@ connection::connection(boost::asio::io_service& io_service,
     srvDB = new SRV_DB(config, log);
 }
 
+connection::~connection() {
+    delete srvDB;
+}
+
 boost::asio::ip::tcp::socket& connection::socket()
 {
   return socket_;
@@ -60,7 +64,7 @@ void connection::handle_read(const boost::system::error_code& e,
     }
     else if (!result)
     {
-      reply_ = reply::stock_reply(reply::bad_request);
+      reply_ = reply::stock_reply(reply::unauthorized);
       boost::asio::async_write(socket_, reply_.to_buffers(),
           strand_.wrap(
             boost::bind(&connection::handle_write, shared_from_this(),

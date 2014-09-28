@@ -50,6 +50,8 @@ const std::string bad_gateway =
 const std::string service_unavailable =
   "HTTP/1.0 503 Service Unavailable\r\n";
 
+const std::string json_status = "";
+
 boost::asio::const_buffer to_buffer(reply::status_type status)
 {
   switch (status)
@@ -86,6 +88,10 @@ boost::asio::const_buffer to_buffer(reply::status_type status)
     return boost::asio::buffer(bad_gateway);
   case reply::service_unavailable:
     return boost::asio::buffer(service_unavailable);
+  case reply::json_true:
+    return boost::asio::buffer(json_status);
+  case reply::json_false:
+    return boost::asio::buffer(json_status);
   default:
     return boost::asio::buffer(internal_server_error);
   }
@@ -239,6 +245,50 @@ std::string to_string(reply::status_type status)
 
 } // namespace stock_replies
 
+namespace json_replies {
+    const std::string jsonTrue = "{\"RESULT\": \"1000\"}";
+    const std::string jsonFalse = "{\"RESULT\": \"1001\"}";
+    const std::string jsonDBConnFailed = "{\"RESULT\": \"1002\"}";
+    const std::string jsonDBBadSQL = "{\"RESULT\": \"1003\"}";
+    const std::string jsonEmptyParameter = "{\"RESULT\": \"1004\"}";
+    const std::string jsonCreateUserSuccess = "{\"RESULT\": \"1005\"}";
+    const std::string jsonUserExists = "{\"RESULT\": \"1006\"}";
+    const std::string jsonBadRequest = "{\"RESULT\": \"1007\"}";
+    const std::string jsonDuplicateEmail = "{\"RESULT\": \"1008\"}";
+    const std::string jsonAuthSuccess = "{\"RESULT\": \"1009\"}";
+    const std::string jsonAuthFail = "{\"RESULT\": \"1010\"}";
+    const std::string jsonInternalError = "{\"RESULT\": \"999\"}";
+
+    std::string to_string(reply::status_type status) {
+        switch (status) {
+            case reply::json_true:
+                return jsonTrue;
+            case reply::json_false:
+                return jsonFalse;
+            case reply::json_db_connect_failed:
+                return jsonDBConnFailed;
+            case reply::json_db_bad_sql:
+                return jsonDBBadSQL;
+            case reply::json_empty_parameter:
+                return jsonEmptyParameter;
+            case reply::json_user_create_success:
+                return jsonCreateUserSuccess;
+            case reply::json_user_create_exists:
+                return jsonUserExists;
+            case reply::json_bad_request:
+                return jsonBadRequest;
+            case reply::json_duplicate_email:
+                return jsonDuplicateEmail;
+            case reply::json_auth_success:
+                return jsonAuthSuccess;
+            case reply::json_auth_fail:
+                return jsonAuthFail;
+            default:
+                return jsonInternalError;
+        }
+    }
+} // namespace json_replies
+
 reply reply::stock_reply(reply::status_type status)
 {
   reply rep;
@@ -249,6 +299,19 @@ reply reply::stock_reply(reply::status_type status)
   rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.size());
   rep.headers[1].name = "Content-Type";
   rep.headers[1].value = "text/html";
+  return rep;
+}
+
+reply reply::json_reply(reply::status_type status)
+{
+  reply rep;
+  rep.status = status;
+  rep.content = json_replies::to_string(status);
+  rep.headers.resize(2);
+  rep.headers[0].name = "Content-Length";
+  rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.size());
+  rep.headers[1].name = "Content-Type";
+  rep.headers[1].value = "application/json";
   return rep;
 }
 
