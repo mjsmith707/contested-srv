@@ -29,6 +29,9 @@ class SRV_DB {
     sql::Driver *driver;
     sql::Connection *connection;
 
+    static const int reservedWordsSize = 230;
+    static const std::string reservedWords[];
+
     bool openConnection();
     std::string intToString(int val);
 
@@ -44,10 +47,11 @@ class SRV_DB {
     bool deleteUser(std::string& username, std::string& password, std::string& email_address);
     std::string createContest(std::string username, std::string contest_name);
     std::string getUserContests(std::string username, unsigned int startPos, unsigned int endPos);
-    bool updateImage(std::string username, int contestID, std::string image, int imgslot);
-    int insertImage(std::string username, std::string base64image);
+    int updateImage(std::string username, int contestID, std::string image, int imgslot);
+    int insertImage(std::string& username, std::string& base64image);
     std::string getContest(int contestID);
     std::string getImage(int imageID);
+    bool checkString(std::string& input);
 };
 
 #endif

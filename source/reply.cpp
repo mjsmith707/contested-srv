@@ -257,6 +257,9 @@ namespace json_replies {
     const std::string jsonDuplicateEmail = "{\"RESULT\": \"1008\"}";
     const std::string jsonAuthSuccess = "{\"RESULT\": \"1009\"}";
     const std::string jsonAuthFail = "{\"RESULT\": \"1010\"}";
+    const std::string jsonUpdateImageSuccess = "{\"RESULT\": \"1011\"}";
+    const std::string jsonUpdateImageFail = "{\"RESULT\": \"1012\"}";
+    const std::string jsonBadParameter = "{\"RESULT\": \"1013\"}";
     const std::string jsonInternalError = "{\"RESULT\": \"999\"}";
 
     std::string to_string(reply::status_type status) {
@@ -283,6 +286,12 @@ namespace json_replies {
                 return jsonAuthSuccess;
             case reply::json_auth_fail:
                 return jsonAuthFail;
+            case reply::json_update_image_success:
+                return jsonUpdateImageSuccess;
+            case reply::json_update_image_fail:
+                return jsonUpdateImageFail;
+            case reply::json_bad_parameter:
+                return jsonBadParameter;
             default:
                 return jsonInternalError;
         }

@@ -124,7 +124,7 @@ void Logger::writeMsg(std::string message) {
         logFile.close();
     }
     catch (std::runtime_error e) {
-        std::cout << "DEBUG: " << e.what() << std::endl;
+        std::cerr << "ERROR: " << e.what() << std::cerr;
     }
 }
 

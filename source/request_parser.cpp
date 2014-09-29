@@ -29,130 +29,107 @@ void request_parser::reset()
 }
 
 boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
-    // Some stupid stuff is happening in here
-    // Splitting single string into vector here
-    // Then rejoining it to a single string later for json eh...
-    std::vector<std::string> inputVctr;
-    std::stringstream inputStream(input);
-    std::string temp;
-    while (std::getline(inputStream, temp)) {
-        inputVctr.push_back(temp);
-    }
-
-    if (runningConfig->getDebug()) {
-        runningLog->sendMsg("Parser Input:");
-        for (unsigned int i=0; i<inputVctr.size(); i++) {
-            runningLog->sendMsg("%s", inputVctr[i].c_str());
+    try {
+        // Some stupid stuff is happening in here
+        // Splitting single string into vector here
+        // Then rejoining it to a single string later for json eh...
+        // Needs major cleanup
+        std::vector<std::string> httpTokens;
+        httpTokens.push_back(std::string("Content-Type: "));
+        httpTokens.push_back(std::string("User-Agent: "));
+        httpTokens.push_back(std::string("Host: "));
+        httpTokens.push_back(std::string("Connection: "));
+        httpTokens.push_back(std::string("Accept-Encoding: "));
+        httpTokens.push_back(std::string("Content-Length: "));
+        httpTokens.push_back(std::string("Accept: "));
+        std::map<std::string, std::string> httpHeaders;
+        std::vector<std::string> inputVctr;
+        std::stringstream inputStream(input);
+        std::string temp;
+        while (std::getline(inputStream, temp)) {
+            inputVctr.push_back(temp);
         }
-        runningLog->sendMsg("=End Parser Input=");
-    }
 
-    size_t postHeader = inputVctr[0].find("POST / HTTP/1.1", 0);
-    if ((postHeader != std::string::npos) && (postHeader == 0)) {
-        req.method = "POST";
-        req.uri = "/";
-        req.http_version_major = 1;
-        req.http_version_minor = 1;
-    }
-    else {
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("postHeader parse failed.");
+            runningLog->sendMsg("Parser Input:");
+            for (unsigned int i=0; i<inputVctr.size(); i++) {
+                runningLog->sendMsg("%s", inputVctr[i].c_str());
+            }
+            runningLog->sendMsg("=End Parser Input=");
         }
+
+        size_t postHeader = inputVctr[0].find("POST / HTTP/1.1", 0);
+        if ((postHeader != std::string::npos) && (postHeader == 0)) {
+            req.method = "POST";
+            req.uri = "/";
+            req.http_version_major = 1;
+            req.http_version_minor = 1;
+        }
+        else {
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("postHeader parse failed.");
+            }
+            return false;
+        }
+
+        for (unsigned int i=1; i<inputVctr.size() && i<12; i++) {
+            for (unsigned int j=0; j<httpTokens.size(); j++) {
+                size_t delimPos = inputVctr.at(i).find(httpTokens.at(j));
+                if (delimPos != std::string::npos) {
+                    size_t splitPos = inputVctr.at(i).find(": ");
+                    if (splitPos == std::string::npos) {
+                        continue;
+                    }
+                    std::string tempstr = inputVctr.at(i).substr(splitPos,inputVctr.at(i).size()-1);
+                    httpHeaders.insert(std::pair<std::string, std::string>(httpTokens.at(j), tempstr));
+                    continue;
+                }
+            }
+        }
+
+        // Rebuild json object
+        Json::Value root;
+        Json::Reader jsonObject;
+        std::string jsonRequest;
+        for (unsigned int i=httpHeaders.size()+1; i<inputVctr.size(); i++) {
+            jsonRequest += inputVctr.at(i);
+        }
+        bool jsonParsed = jsonObject.parse(jsonRequest, root);
+        if (!jsonParsed) {
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("JSON Object parse failed.");
+            }
+            return false;
+        }
+
+        const Json::Value username = root["username"];
+        const Json::Value password = root["password"];
+        const Json::Value requestid = root["requestid"];
+        const Json::Value reqparam1 = root["reqparam1"];
+        const Json::Value reqparam2 = root["reqparam2"];
+        const Json::Value reqparam3 = root["reqparam3"];
+        if (username.empty() || password.empty() || requestid.empty()) {
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("JSON Object parse failed.");
+            }
+            return false;
+        }
+
+        req.username = username.asString();
+        req.password = password.asString();
+        req.requestid = requestid.asString();
+        req.reqparam1 = reqparam1.asString();
+        req.reqparam2 = reqparam2.asString();
+        req.reqparam3 = reqparam3.asString();
+
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str());
+        }
+
+        return true;
+    } catch (std::exception e) {
         return false;
     }
-
-    size_t contentTypeHeader = inputVctr[1].find("Content-Type: application/json", 0);
-    if ((contentTypeHeader == std::string::npos) || (contentTypeHeader != 0)) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("contentTypeHeader parse failed.");
-        }
-        return false;
-    }
-
-    size_t acceptHeader = inputVctr[2].find("Accept: application/json", 0);
-    if ((acceptHeader == std::string::npos) || (acceptHeader != 0)) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("acceptHeader parse failed.");
-        }
-        return false;
-    }
-
-    size_t contentLengthHeader = inputVctr[3].find("Content-Length: ", 0);
-    if ((contentLengthHeader != std::string::npos) && (contentLengthHeader == 0)) {
-        // Should use the content length but meh fuck it
-        // What could possibly go wrong (sorry Grant)
-    }
-    else {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("contentLengthheader parse failed.");
-        }
-        return false;
-    }
-
-    size_t hostHeader = inputVctr[4].find("Host: ", 0);
-    if ((hostHeader == std::string::npos) || (hostHeader != 0)) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("hostHeader parse failed.");
-        }
-        return false;
-    }
-
-    size_t keepaliveHeader = inputVctr[5].find("Connection: Keep-Alive", 0);
-    if ((keepaliveHeader == std::string::npos) || (keepaliveHeader != 0)) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("keepaliveHeader parse failed.");
-        }
-        return false;
-    }
-
-    size_t agentHeader = inputVctr[6].find("User-Agent: ", 0);
-    if ((agentHeader == std::string::npos) || (agentHeader != 0)) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("userAgent parse failed.");
-        }
-        return false;
-    }
-
-    // Rebuild json object
-    Json::Value root;
-    Json::Reader jsonObject;
-    std::string jsonRequest;
-    for (unsigned int i=7; i<inputVctr.size(); i++) {
-        jsonRequest += inputVctr.at(i);
-    }
-    bool jsonParsed = jsonObject.parse(jsonRequest, root);
-    if (!jsonParsed) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("JSON Object parse failed.");
-        }
-        return false;
-    }
-
-    const Json::Value username = root["username"];
-    const Json::Value password = root["password"];
-    const Json::Value requestid = root["requestid"];
-    const Json::Value reqparam1 = root["reqparam1"];
-    const Json::Value reqparam2 = root["reqparam2"];
-    const Json::Value reqparam3 = root["reqparam3"];
-    if (username.empty() || password.empty() || requestid.empty()) {
-        if (runningConfig->getDebug()) {
-            runningLog->sendMsg("JSON Object parse failed.");
-        }
-        return false;
-    }
-
-    req.username = username.asString();
-    req.password = password.asString();
-    req.requestid = requestid.asString();
-    req.reqparam1 = reqparam1.asString();
-    req.reqparam2 = reqparam2.asString();
-    req.reqparam3 = reqparam3.asString();
-
-    if (runningConfig->getDebug()) {
-        runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str());
-    }
-
-    return true;
 }
 
 boost::tribool request_parser::consume(request& req, char input)

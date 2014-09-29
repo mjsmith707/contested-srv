@@ -18,19 +18,16 @@ using namespace std;
 
 void srv_main();
 void initializeLogging(Config* runningConfig, Logger* runningLog);
-void join_all(std::vector<std::thread>& v);
-void do_join(std::thread& t);
 std::string intToString(int val);
 
 int main (int argc, char* argv[]) {
-    std::cout << "cwd: " << argv[0] << std::endl;
     srv_main();
 
     return 0;
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("./bin/Debug/srv.cfg");
+    Config* runningConfig = new Config("srv.cfg");
     Logger* runningLog = new Logger(runningConfig);
     initializeLogging(runningConfig, runningLog);
 
@@ -68,16 +65,6 @@ void srv_main() {
     }
 }
 
-void join_all(std::vector<std::thread>& v)
-{
-    std::for_each(v.begin(),v.end(),do_join);
-}
-
-void do_join(std::thread& t)
-{
-    t.join();
-}
-
 std::string intToString(int val) {
     std::string str = "";
     char tmpstr[256];
@@ -100,4 +87,5 @@ void initializeLogging(Config* runningConfig, Logger* runningLog) {
     runningLog->sendMsg("SQLPort: %d", runningConfig->getSqlPort());
     runningLog->sendMsg("SQLUsername: %s", runningConfig->getSqlUsername().c_str());
     runningLog->sendMsg("SQLPassword: %s", runningConfig->getSqlPassword().c_str());
+    runningLog->sendMsg(" ");
 }

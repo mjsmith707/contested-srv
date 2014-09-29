@@ -51,7 +51,11 @@ struct reply
     json_bad_request = 1007,
     json_duplicate_email = 1008,
     json_auth_success = 1009,
-    json_auth_fail = 1010
+    json_auth_fail = 1010,
+    json_update_image_success = 1011,
+    json_update_image_fail = 1012,
+    json_bad_parameter = 1013,
+    json_internal_error = 999
   } status;
 
   /// The headers to be included in the reply.

@@ -1,8 +1,40 @@
 #include "../header/srv_db.h"
 
+const std::string SRV_DB::reservedWords[] = {"ACCESSIBLE", "ADD", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC",
+        "ASENSITIVE", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY",
+        "CALL", "CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK", "COLLATE",
+        "COLUMN", "CONDITION", "CONSTRAINT", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT_DATE",
+        "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "DATABASE", "DATABASES", "DAY_HOUR", "DAY_MICROSECOND",
+        "DAY_MINUTE", "DAY_SECOND", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DELAYED", "DELETE",
+        "DESC", "DESCRIBE", "DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE", "DROP",
+        "DUAL", "EACH", "ELSE", "ELSEIF", "ENCLOSED", "ESCAPED", "EXISTS", "EXIT",
+        "EXPLAIN", "FALSE", "FETCH", "FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE",
+        "FOREIGN", "FROM", "FULLTEXT", "GRANT", "GENERAL", "GROUP", "HAVING", "HIGH_PRIORITY",
+        "HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IGNORE_SERVER_IDS", "IN", "INDEX",
+        "INFILE", "INNER", "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2",
+        "INT3", "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IS", "ITERATE",
+        "JOIN", "KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE",
+        "LIMIT", "LINEAR", "LINES", "LOAD", "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG",
+        "LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_SSL_VERIFY_SERVER_CERT", "MASTER_HEARTBEAT_PERIOD", "MATCH", "MAXVALUE",
+        "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES",
+        "NATURAL", "NOT", "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTION",
+        "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE", "PRECISION", "PRIMARY",
+        "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES",
+        "REGEXP", "RELEASE", "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT",
+        "RETURN", "REVOKE", "RIGHT", "RLIKE", "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND", "SELECT",
+        "SENSITIVE", "SEPARATOR", "SET", "SHOW", "SIGNAL", "SLOW", "SMALLINT", "SPATIAL",
+        "SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT",
+        "SSL", "STARTING", "STRAIGHT_JOIN", "TABLE", "TERMINATED", "THEN", "TINYBLOB", "TINYINT",
+        "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE",
+        "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE", "USING", "UTC_DATE", "UTC_TIME",
+        "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "WHEN", "WHERE",
+        "WHILE", "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL"};
+
 SRV_DB::SRV_DB(Config* newConfig, Logger* newLog) {
     runningConfig = newConfig;
     runningLog = newLog;
+
+
 
     driver = nullptr;
     connection = nullptr;
@@ -53,6 +85,13 @@ int SRV_DB::createUser(std::string username, std::string password, std::string e
             runningLog->sendMsg("createUser() failed. Unable to connect to database.");
             return 1002;
         }
+    }
+
+    if (!checkString(username) || !checkString(password) || !checkString(email_address)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s , %s", username.c_str(), password.c_str(), email_address.c_str());
+        }
+        return 1003;
     }
 
     std::string query = "SELECT user_name FROM users WHERE user_name='" + username + "';";
@@ -117,7 +156,13 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
         }
     }
 
-    // Todo: sha512, scrubbing username input for bad stuff (SELECT FROM * DROP *) etc.
+    if (!checkString(username) || !checkString(password)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s", username.c_str(), password.c_str());
+        }
+        return false;
+    }
+
     std::string query = "SELECT password FROM users WHERE user_name='" + username + "';";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
@@ -164,6 +209,13 @@ int SRV_DB::getUserID(std::string& username) {
         }
     }
 
+    if (!checkString(username)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s", username.c_str());
+        }
+        return 0;
+    }
+
     std::string query = "SELECT user_id FROM users WHERE user_name='" + username + "';";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
@@ -195,8 +247,12 @@ std::string SRV_DB::getUsername(int userid) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
-            return 0;
+            return "";
         }
+    }
+
+    if (userid == 0) {
+        return "";
     }
 
     std::string query = "SELECT user_name FROM users WHERE user_id='" + intToString(userid) + "';";
@@ -235,6 +291,13 @@ bool SRV_DB::deleteUser(std::string& username, std::string& password, std::strin
         }
     }
 
+    if (!checkString(username) || !checkString(password) || !checkString(email_address)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s , %s", username.c_str(), password.c_str(), email_address.c_str());
+        }
+        return false;
+    }
+
     int userid = getUserID(username);
     if (userid == 0) {
         if (runningConfig->getDebug()) {
@@ -266,8 +329,15 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
-            return "null";
+            return "{\"RESULT\": \"1002\"}";
         }
+    }
+
+    if (!checkString(username) || !checkString(contest_name)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s", username.c_str(), contest_name.c_str());
+        }
+        return "{\"RESULT\": \"1013\"}";
     }
 
     int userid = getUserID(username);
@@ -275,7 +345,7 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
         }
-        return "null";
+        return "{\"RESULT\": \"1013\"}";
     }
 
     std::string query = "INSERT INTO contest(user1, name) values('" + intToString(userid) + "','" + contest_name + "');";
@@ -295,32 +365,37 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        return "null";
+        return "{\"RESULT\": \"1003\"}";
     }
 
     int resultInt = 0;
     while(results->next()) {
         resultInt = results->getInt(1);
     }
-
-    return intToString(resultInt);
+    std::string result = "{\"CONTESTKEY\": \"";
+    result += intToString(resultInt);
+    result += "\"}";
+    return result;
 }
 
 std::string SRV_DB::getUserContests(std::string username, unsigned int startPos, unsigned int endPos) {
-    Json::Value event;
-
     if (endPos < startPos) {
         runningLog->sendMsg("getUserContests() failed. endPos is smaller than startPos.");
-        event["error"] = "Ending position smaller than starting position";
-        return event.toStyledString();
+        return "{\"RESULT\": \"1013\"}";
     }
 
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserContests() failed. Unable to connect to database.");
-            event["error"] = "Unable to connect to database.";
-            return event.toStyledString();
+            return "{\"RESULT\": \"1002\"}";
         }
+    }
+
+    if (!checkString(username)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s", username.c_str());
+        }
+        return "{\"RESULT\": \"1013\"}";
     }
 
     int userid = getUserID(username);
@@ -328,8 +403,7 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("getUserID returned UID 0 (AKA does not exist) for username: %s", username.c_str());
         }
-        event["error"] = "Username does not exist";
-        return event.toStyledString();
+        return "{\"RESULT\": \"1013\"}";
     }
 
     std::string query = "SELECT * FROM contest WHERE user1='" + intToString(userid) + "' OR user2='" + intToString(userid) + "' LIMIT " + intToString(startPos) + "," + intToString(endPos) + ";";
@@ -347,13 +421,12 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        event["error"] = e.what();
-        return event.toStyledString();
+        return "{\"RESULT\": \"1003\"}";
     }
 
     unsigned int i=0;
     unsigned int limit = endPos - startPos;
-
+    Json::Value event;
     while(results->next() && (i<limit)) {
         event["contests"][i]["contestID"] = results->getString(1).asStdString();
         event["contests"][i]["userOneID"] = results->getString(2).asStdString();
@@ -361,19 +434,27 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         event["contests"][i]["contestName"] = results->getString(4).asStdString();
         event["contests"][i]["image1"] = getImage(results->getInt(7));
         event["contests"][i]["image2"] = getImage(results->getInt(8));
-        event["contests"][i]["userOne"] = getUsername(results->getInt(1));
-        event["contests"][i]["userTwo"] = getUsername(results->getInt(2));
+        event["contests"][i]["userOne"] = getUsername(results->getInt(2));
+        event["contests"][i]["userTwo"] = getUsername(results->getInt(3));
         i++;
     }
     return event.toStyledString();
 }
 
-int SRV_DB::insertImage(std::string username, std::string base64image) {
+// Internally used to store image in the images table. Only called by updateImage. Should be private.
+int SRV_DB::insertImage(std::string& username, std::string& base64image) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("insertImage() failed. Unable to connect to database.");
             return 0;
         }
+    }
+
+    if (!checkString(username) || !checkString(base64image)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s", username.c_str(), base64image.c_str());
+        }
+        return 0;
     }
 
     int userid = getUserID(username);
@@ -411,12 +492,19 @@ int SRV_DB::insertImage(std::string username, std::string base64image) {
     return resultInt;
 }
 
-bool SRV_DB::updateImage(std::string username, int contestID, std::string image, int imgslot) {
+int SRV_DB::updateImage(std::string username, int contestID, std::string image, int imgslot) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("insertImage() failed. Unable to connect to database.");
-            return 0;
+            return 1002;
         }
+    }
+
+    if (!checkString(username) || !checkString(image)) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("Caught Special Character: %s , %s", username.c_str(), image.c_str());
+        }
+        return 1013;
     }
 
     int imageid = insertImage(username, image);
@@ -424,17 +512,17 @@ bool SRV_DB::updateImage(std::string username, int contestID, std::string image,
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("updateImage() failed. Couldn't insert image.");
         }
-        return false;
+        return 999;
     }
     std::string query;
     if (imgslot == 1) {
-        query = "UPDATE contest SET image1='" + intToString(imageid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
+        query = "UPDATE contest SET image1='" + intToString(imageid) + "', user1='" + intToString(getUserID(username)) +"' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else if (imgslot == 2) {
-        query = "UPDATE contest SET image2='" + intToString(imageid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
+        query = "UPDATE contest SET image2='" + intToString(imageid) + "', user2='" + intToString(getUserID(username)) + "' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else {
-        return false;
+        return 1013;
     }
 
     if (runningConfig->getDebug()) {
@@ -450,20 +538,17 @@ bool SRV_DB::updateImage(std::string username, int contestID, std::string image,
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        return false;
+        return 1012;
     }
 
-    return true;
+    return 1011;
 }
 
 std::string SRV_DB::getContest(int contestID) {
-    Json::Value event;
-
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getContest() failed. Unable to connect to database.");
-            event["error"] = "Unable to connect to database.";
-            return event.toStyledString();
+            return "{\"RESULT\": \"1002\"}";
         }
     }
 
@@ -482,10 +567,10 @@ std::string SRV_DB::getContest(int contestID) {
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
-        event["error"] = e.what();
-        return event.toStyledString();
+        return "{\"RESULT\": \"1003\"}";
     }
 
+    Json::Value event;
     while(results->next()) {
         event["contest"]["contestID"] = results->getString(1).asStdString();
         event["contest"]["userOneID"] = results->getInt(2);
@@ -540,4 +625,49 @@ std::string SRV_DB::getImage(int imageID) {
     }
 
     return resultStr.asStdString();
+}
+
+// Enforce a minimal set of characters. 0-9, a-z, A-Z,
+// and a few special chars.
+// Find mysql reserved words and other bad stuff
+bool SRV_DB::checkString(std::string& input) {
+    for (unsigned int i=0; i<input.size(); i++) {
+        char temp = input.at(i);
+        switch (temp) {
+            case ' ':
+                continue;
+            case '.':
+                continue;
+            case '@':
+                continue;
+            case '/':
+                continue;
+            case '+':
+                continue;
+            default:
+                break;
+        }
+        if ((temp < 48) && (temp != 32)) {
+            return false;
+        }
+        else if ((temp > 57) && (temp < 65)) {
+            return false;
+        }
+        else if ((temp > 91) && (temp < 97)) {
+            return false;
+        }
+        else if ((temp > 123)) {
+            return false;
+        }
+    }
+
+    for (int i=0; i<reservedWordsSize; i++) {
+        if (input.find(reservedWords[i]) != std::string::npos) {
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("Caught SQL Reserved Word: %s", input.c_str());
+            }
+            return false;
+        }
+    }
+    return true;
 }
