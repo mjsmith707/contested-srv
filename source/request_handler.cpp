@@ -73,7 +73,7 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     results = srvDB->getContest(contestid);
                 }
                 catch (std::exception e) {
-                    rep = reply::json_reply(reply::json_db_bad_sql);
+                    rep = reply::json_reply(reply::json_bad_parameter);
                     return;
                 }
             }
@@ -82,11 +82,15 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     rep = reply::json_reply(reply::json_empty_parameter);
                     return;
                 }
+                if (req.reqparam2.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
                 try {
-                    results = srvDB->createContest(req.username, req.reqparam1);
+                    results = srvDB->createContest(req.username, req.reqparam1, req.reqparam2);
                 }
                 catch (std::exception e) {
-                    rep = reply::json_reply(reply::json_db_bad_sql);
+                    rep = reply::json_reply(reply::json_bad_parameter);
                     return;
                 }
             }
@@ -103,7 +107,79 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     return;
                 }
                 catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_bad_parameter);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("addfriend") == 0) {
+                if (req.reqparam1.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
+                try {
+                    // username, friendname
+                    results = srvDB->addFriend(req.username, req.reqparam1);
+                }
+                catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_bad_parameter);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("removefriend") == 0) {
+                if (req.reqparam1.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
+                try {
+                    // username, friendname
+                    results = srvDB->removeFriend(req.username, req.reqparam1);
+                }
+                catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_bad_parameter);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("getmyfriends") == 0) {
+                try {
+                    results = srvDB->getMyFriends(req.username);
+                }
+                catch (std::exception e) {
                     rep = reply::json_reply(reply::json_db_bad_sql);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("getfriendrequests") == 0) {
+                try {
+                    results = srvDB->getFriendRequests(req.username);
+                }
+                catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_db_bad_sql);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("vote") == 0) {
+                if (req.reqparam1.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
+                if (req.reqparam2.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
+                try {
+                    int contestid = stoi(req.reqparam1);
+                    int slot = stoi(req.reqparam2);
+                    if (srvDB->vote(req.username, contestid, slot)) {
+                        rep = reply::json_reply(reply::json_true);
+                        return;
+                    }
+                    else {
+                        rep = reply::json_reply(reply::json_false);
+                        return;
+                    }
+                }
+                catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_bad_parameter);
                     return;
                 }
             }
