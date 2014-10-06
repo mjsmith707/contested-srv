@@ -27,9 +27,17 @@ int main (int argc, char* argv[]) {
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("srv.cfg");
-    Logger* runningLog = new Logger(runningConfig);
-    initializeLogging(runningConfig, runningLog);
+    Config* runningConfig = nullptr;
+    Logger* runningLog = nullptr;
+    try {
+        runningConfig = new Config("srv.cfg");
+        runningLog = new Logger(runningConfig);
+        initializeLogging(runningConfig, runningLog);
+    }
+    catch (std::exception e) {
+        cerr << "FATAL ERROR: Initialization failed. Dragons beyond this point.\n Error: " << e.what() << endl;
+        return;
+    }
 
     try {
         // Block all signals for background thread.
@@ -59,6 +67,7 @@ void srv_main() {
         // Stop the server.
         http_main.stop();
         http_main_thread.join();
+        runningLog->sendMsg("Server shutting down...");
     }
     catch (std::exception& e) {
         runningLog->sendMsg("%s", e.what());

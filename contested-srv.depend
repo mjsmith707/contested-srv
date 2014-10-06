@@ -2,7 +2,7 @@
 1409280241 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\config.cpp
 	"../header/config.h"
 
-1409367907 /config.h"
+1410716701 /config.h"
 
 1409275514 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\parsecfg.cpp
 
@@ -15,14 +15,14 @@
 	<iostream>
 	<stdexcept>
 
-1409368045 >
+1410716034 >
 
 1409280187 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\svrmain.cpp
 	"../header/config.h"
 	"../header/logger.h"
 	<iostream>
 
-1409693985 
+1410745873 
 
 1409282930 source:c:\users\mjsmi_000\documents\school\fall 2014\software design and development\contested-svr\source\logger.cpp
 	"../header/logger.h"
@@ -70,68 +70,8 @@
 	"../header/logger.h"
 	<iostream>
 
-1409367907 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
-	"../header/config.h"
-
-1409368045 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
-	"../header/constants.h"
-	<vector>
-	<string>
-	<fstream>
-	<iostream>
-	<stdexcept>
-
-1409376817 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
-	"../header/logger.h"
-
-1409376817 /logger.h"
-
-1409376817 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
-	"../header/constants.h"
-	"../header/config.h"
-	<vector>
-	<string>
-	<fstream>
-	<iostream>
-	<stdexcept>
-	<cstdio>
-	<cstdarg>
-	<ctime>
-	<mutex>
-
-1409694333 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
-	"../header/srv_db.h"
-
-1409694333 /srv_db.h"
-
-1409693290 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
-	"../header/constants.h"
-	"../header/config.h"
-	"../header/logger.h"
-	<cppconn/driver.h>
-	<cppconn/connection.h>
-	<cppconn/statement.h>
-	<cppconn/prepared_statement.h>
-	<cppconn/resultset.h>
-	<cppconn/metadata.h>
-	<cppconn/resultset_metadata.h>
-	<cppconn/exception.h>
-	<cppconn/warning.h>
-
-1409693290 arning.h>
-
-1409693985 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
-	"../header/constants.h"
-	"../header/config.h"
-	"../header/logger.h"
-	"../header/srv_db.h"
-	<iostream>
-	<thread>
-	<chrono>
-
-1409359480 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/constants.h
-
 1410716701 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
+	"../header/config.h"
 	"../header/config.h"
 
 1410716034 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
@@ -141,11 +81,18 @@
 	<fstream>
 	<iostream>
 	<stdexcept>
-
-1410644861 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/constants.h
+	"../header/constants.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
 
 1411960382 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
 	"../header/logger.h"
+	"../header/logger.h"
+
+1410744312 /logger.h"
 
 1410644861 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
 	"../header/constants.h"
@@ -159,8 +106,62 @@
 	<cstdarg>
 	<ctime>
 	<mutex>
+	"../header/constants.h"
+	"../header/config.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+	<cstdio>
+	<cstdarg>
+	<ctime>
+	<mutex>
+
+1412406856 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
+	"../header/srv_db.h"
+	"../header/srv_db.h"
+
+1412410807 /srv_db.h"
+
+1412410833 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	<cppconn/driver.h>
+	<cppconn/connection.h>
+	<cppconn/statement.h>
+	<cppconn/prepared_statement.h>
+	<cppconn/resultset.h>
+	<cppconn/metadata.h>
+	<cppconn/resultset_metadata.h>
+	<cppconn/exception.h>
+	<cppconn/warning.h>
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	<jsoncpp/json/json.h>
+	<vector>
+	<cppconn/driver.h>
+	<cppconn/connection.h>
+	<cppconn/statement.h>
+	<cppconn/prepared_statement.h>
+	<cppconn/resultset.h>
+	<cppconn/metadata.h>
+	<cppconn/resultset_metadata.h>
+	<cppconn/exception.h>
+	<cppconn/warning.h>
+
+1412410833 arning.h>
 
 1411960654 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	"../header/srv_db.h"
+	<iostream>
+	<thread>
+	<chrono>
 	"../header/constants.h"
 	"../header/config.h"
 	"../header/logger.h"
@@ -177,27 +178,12 @@
 	<pthread.h>
 	<signal.h>
 
-1412410833 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
-	"../header/constants.h"
-	"../header/config.h"
-	"../header/logger.h"
-	<jsoncpp/json/json.h>
-	<vector>
-	<cppconn/driver.h>
-	<cppconn/connection.h>
-	<cppconn/statement.h>
-	<cppconn/prepared_statement.h>
-	<cppconn/resultset.h>
-	<cppconn/metadata.h>
-	<cppconn/resultset_metadata.h>
-	<cppconn/exception.h>
-	<cppconn/warning.h>
-
-1412406856 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
-	"../header/srv_db.h"
+1410644861 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/constants.h
 
 1409966410 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_net.cpp
 	"../header/srv_net.h"
+
+1409966410 /srv_net.h"
 
 1409966429 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_net.h
 	"../header/constants.h"
@@ -209,6 +195,8 @@
 	<vector>
 	<boost/bind.hpp>
 	"../header/request_handler.h"
+
+1411960841 /request_handler.h"
 
 1411845102 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/connection.h
 	<boost/asio.hpp>
@@ -229,6 +217,8 @@
 	<vector>
 	<boost/asio.hpp>
 	"../header/header.h"
+
+1411355870 /header.h"
 
 1410716370 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/header.h
 	<string>
@@ -257,6 +247,8 @@
 1410716692 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/mime_types.cpp
 	"../header/mime_types.h"
 
+1410716692 /mime_types.h"
+
 1410716396 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/mime_types.h
 	<string>
 
@@ -264,6 +256,8 @@
 	"../header/reply.h"
 	<string>
 	<boost/lexical_cast.hpp>
+
+1411948723 ical_cast.hpp>
 
 1412410807 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/request_handler.cpp
 	"../header/request_handler.h"
@@ -284,6 +278,8 @@
 	<vector>
 	<jsoncpp/json/json.h>
 
+1411963980 son/json.h>
+
 1410745873 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/server.cpp
 	"../header/server.h"
 	<boost/thread.hpp>
@@ -299,6 +295,178 @@
 	<boost/shared_ptr.hpp>
 	"../header/connection.h"
 	"../header/request_handler.h"
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/config.cpp
+	"../header/config.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/config.h
+	"../header/constants.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/constants.h
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/connection.cpp
+	"../header/connection.h"
+	<vector>
+	<boost/bind.hpp>
+	"../header/request_handler.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/connection.h
+	<boost/asio.hpp>
+	<boost/array.hpp>
+	<boost/noncopyable.hpp>
+	<boost/shared_ptr.hpp>
+	<boost/enable_shared_from_this.hpp>
+	"../header/reply.h"
+	"../header/request.h"
+	"../header/request_handler.h"
+	"../header/request_parser.h"
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/reply.h
+	<string>
+	<vector>
+	<boost/asio.hpp>
+	"../header/header.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/header.h
+	<string>
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/request.h
+	<string>
+	<vector>
+	"../header/header.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/request_handler.h
+	<string>
+	<boost/noncopyable.hpp>
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	"../header/srv_db.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/logger.h
+	"../header/constants.h"
+	"../header/config.h"
+	<vector>
+	<string>
+	<fstream>
+	<iostream>
+	<stdexcept>
+	<cstdio>
+	<cstdarg>
+	<ctime>
+	<mutex>
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_db.h
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	<jsoncpp/json/json.h>
+	<vector>
+	<cppconn/driver.h>
+	<cppconn/connection.h>
+	<cppconn/statement.h>
+	<cppconn/prepared_statement.h>
+	<cppconn/resultset.h>
+	<cppconn/metadata.h>
+	<cppconn/resultset_metadata.h>
+	<cppconn/exception.h>
+	<cppconn/warning.h>
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/request_parser.h
+	<boost/logic/tribool.hpp>
+	<boost/tuple/tuple.hpp>
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	<iostream>
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/logger.cpp
+	"../header/logger.h"
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/mime_types.cpp
+	"../header/mime_types.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/mime_types.h
+	<string>
+
+1412570628 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/reply.cpp
+	"../header/reply.h"
+	<string>
+	<boost/lexical_cast.hpp>
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/request_handler.cpp
+	"../header/request_handler.h"
+	<fstream>
+	<sstream>
+	<string>
+	<boost/lexical_cast.hpp>
+	"../header/mime_types.h"
+	"../header/reply.h"
+	"../header/request.h"
+	"../header/srv_db.h"
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/request_parser.cpp
+	"../header/request_parser.h"
+	"../header/request.h"
+	<iostream>
+	<sstream>
+	<vector>
+	<jsoncpp/json/json.h>
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/server.cpp
+	"../header/server.h"
+	<boost/thread.hpp>
+	<boost/bind.hpp>
+	<boost/shared_ptr.hpp>
+	<vector>
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/server.h
+	<boost/asio.hpp>
+	<string>
+	<vector>
+	<boost/noncopyable.hpp>
+	<boost/shared_ptr.hpp>
+	"../header/connection.h"
+	"../header/request_handler.h"
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+
+1412568929 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_db.cpp
+	"../header/srv_db.h"
+
+1412569142 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_main.cpp
+	"../header/constants.h"
+	"../header/config.h"
+	"../header/logger.h"
+	"../header/srv_db.h"
+	"../header/server.h"
+	<boost/asio.hpp>
+	<boost/thread.hpp>
+	<boost/bind.hpp>
+	<boost/lexical_cast.hpp>
+	<iostream>
+	<thread>
+	<chrono>
+	<algorithm>
+	<pthread.h>
+	<signal.h>
+
+1412443255 source:/mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/source/srv_net.cpp
+	"../header/srv_net.h"
+
+1412443255 /mnt/data/Text/School/Fall 2014/Software Design and Development/contested-srv/header/srv_net.h
 	"../header/constants.h"
 	"../header/config.h"
 	"../header/logger.h"

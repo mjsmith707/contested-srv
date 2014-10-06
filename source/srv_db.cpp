@@ -794,7 +794,6 @@ std::string SRV_DB::addFriend(std::string username, std::string friendname) {
     }
 
     sql::Statement* sqlStatement;
-    sql::ResultSet* results;
     try {
         sqlStatement = connection->createStatement();
         sqlStatement->execute("USE contested;");
@@ -842,7 +841,6 @@ std::string SRV_DB::removeFriend(std::string username, std::string friendname) {
     }
 
     sql::Statement* sqlStatement;
-    sql::ResultSet* results;
     try {
         sqlStatement = connection->createStatement();
         sqlStatement->execute("USE contested;");
@@ -950,7 +948,7 @@ bool SRV_DB::vote(std::string username, int contestid, int imgslot) {
         return false;
     }
 
-
+    return true;
 }
 
 // Enforce a minimal set of characters. 0-9, a-z, A-Z,
