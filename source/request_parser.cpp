@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <string>
 #include <jsoncpp/json/json.h>
 
 namespace http {
@@ -30,71 +31,118 @@ void request_parser::reset()
 
 boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
     try {
-        // Some stupid stuff is happening in here
-        // Splitting single string into vector here
-        // Then rejoining it to a single string later for json eh...
-        // Needs major cleanup
-        std::vector<std::string> httpTokens;
-        httpTokens.push_back(std::string("Content-Type: "));
-        httpTokens.push_back(std::string("User-Agent: "));
-        httpTokens.push_back(std::string("Host: "));
-        httpTokens.push_back(std::string("Connection: "));
-        httpTokens.push_back(std::string("Accept-Encoding: "));
-        httpTokens.push_back(std::string("Content-Length: "));
-        httpTokens.push_back(std::string("Accept: "));
-        std::map<std::string, std::string> httpHeaders;
-        std::vector<std::string> inputVctr;
-        std::stringstream inputStream(input);
-        std::string temp;
-        while (std::getline(inputStream, temp)) {
-            inputVctr.push_back(temp);
+        if (req.readHeader) {
+            // Some stupid stuff is happening in here
+            // Splitting single string into vector here
+            // Then rejoining it to a single string later for json eh...
+            // Needs major cleanup
+            std::vector<std::string> httpTokens;
+            httpTokens.push_back(std::string("Content-Type: "));
+            httpTokens.push_back(std::string("User-Agent: "));
+            httpTokens.push_back(std::string("Host: "));
+            httpTokens.push_back(std::string("Connection: "));
+            httpTokens.push_back(std::string("Accept-Encoding: "));
+            httpTokens.push_back(std::string("Content-Length: "));
+            httpTokens.push_back(std::string("Accept: "));
+            std::map<std::string, std::string> httpHeaders;
+            std::vector<std::string> inputVctr;
+            std::stringstream inputStream(input);
+            std::string temp;
+            while (std::getline(inputStream, temp)) {
+                inputVctr.push_back(temp);
+            }
+
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("Parser Input:");
+                for (unsigned int i=0; i<inputVctr.size(); i++) {
+                    runningLog->sendMsg("%s", inputVctr[i].c_str());
+                }
+            }
+
+            size_t postHeader = inputVctr[0].find("POST / HTTP/1.1", 0);
+            if ((postHeader != std::string::npos) && (postHeader == 0)) {
+                req.method = "POST";
+                req.uri = "/";
+                req.http_version_major = 1;
+                req.http_version_minor = 1;
+            }
+            else {
+                if (runningConfig->getDebug()) {
+                    runningLog->sendMsg("postHeader parse failed.");
+                }
+                return false;
+            }
+
+            for (unsigned int i=1; i<inputVctr.size() && i<12; i++) {
+                for (unsigned int j=0; j<httpTokens.size(); j++) {
+                    size_t delimPos = inputVctr.at(i).find(httpTokens.at(j));
+                    if (delimPos != std::string::npos) {
+                        size_t splitPos = inputVctr.at(i).find(": ");
+                        if (splitPos == std::string::npos) {
+                            continue;
+                        }
+                        std::string tempstr = inputVctr.at(i).substr(splitPos+2,inputVctr.at(i).size()-2);
+                        httpHeaders.insert(std::pair<std::string, std::string>(httpTokens.at(j), tempstr));
+                        continue;
+                    }
+                }
+            }
+            try {
+                std::map<std::string,std::string>::iterator it;
+                it = httpHeaders.find("Content-Length: ");
+                if (it == httpHeaders.end()) {
+                    if (runningConfig->getDebug()) {
+                        runningLog->sendMsg("contentLength parse failed.");
+                    }
+                    return false;
+                }
+                std::string contentLength = it->second;
+                req.contentLength = stoi(contentLength);
+            } catch (std::exception e) {
+                if (runningConfig->getDebug()) {
+                    runningLog->sendMsg("contentLength parse failed.");
+                }
+                return false;
+            }
+
+            std::string jsonRequest;
+            for (unsigned int i=httpHeaders.size()+1; i<inputVctr.size(); i++) {
+                std::string temp = inputVctr.at(i);
+                req.readAmount += temp.length();
+                req.jsonRequest += inputVctr.at(i);
+                if (runningConfig->getDebug()) {
+                    runningLog->sendMsg("%s", temp.c_str());
+                }
+            }
+            req.readHeader = false;
+            if (req.contentLength > req.readAmount) {
+                return boost::indeterminate;
+            }
+        }
+        else if (!req.readHeader) {
+
+            std::string jsonRequest;
+            req.readAmount += input.length();
+            req.jsonRequest+= input;
+            if (runningConfig->getDebug()) {
+                runningLog->sendMsg("%s", input.c_str());
+                runningLog->sendMsg("Content-Length = %d", req.contentLength);
+                runningLog->sendMsg("Read Amount = %d", req.readAmount);
+            }
+            if ((input.length() != 0) && (req.readAmount < req.contentLength)) {
+                return boost::indeterminate;
+            }
         }
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("Parser Input:");
-            for (unsigned int i=0; i<inputVctr.size(); i++) {
-                runningLog->sendMsg("%s", inputVctr[i].c_str());
-            }
             runningLog->sendMsg("=End Parser Input=");
-        }
-
-        size_t postHeader = inputVctr[0].find("POST / HTTP/1.1", 0);
-        if ((postHeader != std::string::npos) && (postHeader == 0)) {
-            req.method = "POST";
-            req.uri = "/";
-            req.http_version_major = 1;
-            req.http_version_minor = 1;
-        }
-        else {
-            if (runningConfig->getDebug()) {
-                runningLog->sendMsg("postHeader parse failed.");
-            }
-            return false;
-        }
-
-        for (unsigned int i=1; i<inputVctr.size() && i<12; i++) {
-            for (unsigned int j=0; j<httpTokens.size(); j++) {
-                size_t delimPos = inputVctr.at(i).find(httpTokens.at(j));
-                if (delimPos != std::string::npos) {
-                    size_t splitPos = inputVctr.at(i).find(": ");
-                    if (splitPos == std::string::npos) {
-                        continue;
-                    }
-                    std::string tempstr = inputVctr.at(i).substr(splitPos,inputVctr.at(i).size()-1);
-                    httpHeaders.insert(std::pair<std::string, std::string>(httpTokens.at(j), tempstr));
-                    continue;
-                }
-            }
         }
 
         // Rebuild json object
         Json::Value root;
         Json::Reader jsonObject;
-        std::string jsonRequest;
-        for (unsigned int i=httpHeaders.size()+1; i<inputVctr.size(); i++) {
-            jsonRequest += inputVctr.at(i);
-        }
-        bool jsonParsed = jsonObject.parse(jsonRequest, root);
+
+        bool jsonParsed = jsonObject.parse(req.jsonRequest, root);
         if (!jsonParsed) {
             if (runningConfig->getDebug()) {
                 runningLog->sendMsg("JSON Object parse failed.");
