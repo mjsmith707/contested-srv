@@ -43,7 +43,10 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             httpTokens.push_back(std::string("Connection: "));
             httpTokens.push_back(std::string("Accept-Encoding: "));
             httpTokens.push_back(std::string("Content-Length: "));
+            httpTokens.push_back(std::string("Accept-Language: "));
             httpTokens.push_back(std::string("Accept: "));
+            httpTokens.push_back(std::string("Pragma: "));
+            httpTokens.push_back(std::string("Cache-Control: "));
             std::map<std::string, std::string> httpHeaders;
             std::vector<std::string> inputVctr;
             std::stringstream inputStream(input);
@@ -111,7 +114,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.readAmount += temp.length();
                 req.jsonRequest += inputVctr.at(i);
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("%s", temp.c_str());
+                    //runningLog->sendMsg("%s", temp.c_str());
                 }
             }
             req.readHeader = false;
@@ -125,7 +128,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             req.readAmount += input.length();
             req.jsonRequest+= input;
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("%s", input.c_str());
+                //runningLog->sendMsg("%s", input.c_str());
                 runningLog->sendMsg("Content-Length = %d", req.contentLength);
                 runningLog->sendMsg("Read Amount = %d", req.readAmount);
             }
@@ -135,6 +138,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         }
 
         if (runningConfig->getDebug()) {
+            runningLog->sendMsg("%s", req.jsonRequest.c_str());
             runningLog->sendMsg("=End Parser Input=");
         }
 
