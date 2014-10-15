@@ -25,10 +25,6 @@ struct request
   std::string uri;
   int http_version_major;
   int http_version_minor;
-  bool readHeader = true;
-  size_t contentLength = 0;
-  size_t readAmount = 0;
-  std::string jsonRequest;
   std::vector<header> headers;
 
   std::string username;
