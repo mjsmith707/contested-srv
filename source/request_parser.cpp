@@ -114,7 +114,8 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.readAmount += temp.length();
                 req.jsonRequest += inputVctr.at(i);
                 if (runningConfig->getDebug()) {
-                    //runningLog->sendMsg("%s", temp.c_str());
+                    runningLog->sendMsg("Content-Length = %d", req.contentLength);
+                    runningLog->sendMsg("Read Amount = %d", req.readAmount);
                 }
             }
             req.readHeader = false;
@@ -128,7 +129,6 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             req.readAmount += input.length();
             req.jsonRequest+= input;
             if (runningConfig->getDebug()) {
-                //runningLog->sendMsg("%s", input.c_str());
                 runningLog->sendMsg("Content-Length = %d", req.contentLength);
                 runningLog->sendMsg("Read Amount = %d", req.readAmount);
             }
@@ -160,6 +160,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         const Json::Value reqparam1 = root["reqparam1"];
         const Json::Value reqparam2 = root["reqparam2"];
         const Json::Value reqparam3 = root["reqparam3"];
+        const Json::Value reqparam4 = root["reqparam4"];
         if (username.empty() || password.empty() || requestid.empty()) {
             if (runningConfig->getDebug()) {
                 runningLog->sendMsg("JSON Object parse failed.");
@@ -173,9 +174,10 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         req.reqparam1 = reqparam1.asString();
         req.reqparam2 = reqparam2.asString();
         req.reqparam3 = reqparam3.asString();
+        req.reqparam4 = reqparam4.asString();
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str());
+            runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s, param4=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
         }
 
         return true;

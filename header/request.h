@@ -37,6 +37,7 @@ struct request
   std::string reqparam1;
   std::string reqparam2;
   std::string reqparam3;
+  std::string reqparam4;
 };
 
 } // namespace server3

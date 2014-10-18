@@ -326,7 +326,7 @@ bool SRV_DB::deleteUser(std::string& username, std::string& password, std::strin
     }
 }
 
-std::string SRV_DB::createContest(std::string username, std::string contest_name, std::string permissions) {
+std::string SRV_DB::createContest(std::string username, std::string contest_name, std::string permissions, std::string endtime) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("getUserID() failed. Unable to connect to database.");
@@ -334,9 +334,9 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
         }
     }
 
-    if (!checkString(username) || !checkString(contest_name) || !checkString(permissions)) {
+    if (!checkString(username) || !checkString(contest_name) || !checkString(permissions) || !checkString(endtime)) {
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("Caught Special Character: %s , %s , %s", username.c_str(), contest_name.c_str(), permissions.c_str());
+            runningLog->sendMsg("Caught Special Character: %s , %s , %s , %s", username.c_str(), contest_name.c_str(), permissions.c_str(), endtime.c_str());
         }
         return "{\"RESULT\": \"1013\"}";
     }
@@ -370,7 +370,7 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
         return "{\"RESULT\": \"1013\"}";
     }
 
-    std::string query = "INSERT INTO contest(user1, name, permissions) values('" + intToString(userid) + "','" + contest_name + "','" + intToString(permission) + "');";
+    std::string query = "INSERT INTO contest(user1, name, permissions, endtime) values('" + intToString(userid) + "','" + contest_name + "','" + intToString(permission) + "','" + endtime + "');";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
@@ -703,8 +703,10 @@ std::string SRV_DB::getMyFriends(std::string username) {
     }
 
     Json::Value event;
+    int i=0;
     while(results->next()) {
-        event["FRIEND"] = getUsername(results->getInt(2));
+        event["friends"][i]["name"] = getUsername(results->getInt(2));
+        i++;
     }
 
     return event.toStyledString();
@@ -756,8 +758,9 @@ std::string SRV_DB::getFriendRequests(std::string username) {
     }
 
     Json::Value event;
+    int i=0;
     while(results->next()) {
-        event["friend"] = getUsername(results->getInt(1));
+        event["friends"][i]["name"] = getUsername(results->getInt(1));
     }
 
     return event.toStyledString();
@@ -892,11 +895,11 @@ int SRV_DB::getContestPermission(int contestid) {
     return resultInt;
 }
 
-bool SRV_DB::vote(std::string username, int contestid, int imgslot) {
+std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("vote() failed. Unable to connect to database.");
-            return false;
+            return "{\"RESULT\": \"1000\"}";
         }
     }
 
@@ -904,23 +907,26 @@ bool SRV_DB::vote(std::string username, int contestid, int imgslot) {
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("Caught Special Character: %s", username.c_str());
         }
-        return false;
+        return "{\"RESULT\": \"1000\"}";
     }
 
     std::string query2;
+    std::string query3;
     if (imgslot == 1) {
         query2 = "UPDATE contest SET user1_score = LAST_INSERT_ID(user1_score + 1) WHERE contest_id='" + intToString(contestid) + "';";
+        query3 = "SELECT user1_score FROM contest WHERE contest_id='" + intToString(contestid) + "';";
     }
     else if (imgslot == 2) {
         query2 = "UPDATE contest SET user2_score = LAST_INSERT_ID(user2_score + 1) WHERE contest_id='" + intToString(contestid) + "';";
+        query3 = "SELECT user1_score, user2_score FROM contest WHERE contest_id='" + intToString(contestid) + "';";
     }
     else {
-        return false;
+        return "{\"RESULT\": \"1000\"}";
     }
 
     int userid = getUserID(username);
     if (userid == 0) {
-        return false;
+        return "{\"RESULT\": \"1000\"}";
     }
 
     // if (contestExists(contestid)
@@ -929,9 +935,11 @@ bool SRV_DB::vote(std::string username, int contestid, int imgslot) {
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query1.c_str());
         runningLog->sendMsg("SQL: %s", query2.c_str());
+        runningLog->sendMsg("SQL: %s", query3.c_str());
     }
 
     sql::Statement* sqlStatement;
+    sql::ResultSet* results;
     try {
         sqlStatement = connection->createStatement();
         sqlStatement->execute("USE contested;");
@@ -939,16 +947,23 @@ bool SRV_DB::vote(std::string username, int contestid, int imgslot) {
         sqlStatement->execute(query1);
         sqlStatement = connection->createStatement();
         sqlStatement->execute(query2);
+        sqlStatement = connection->createStatement();
+        results = sqlStatement->executeQuery(query3);
     }
     catch (sql::SQLException e) {
         // This will be triggered every time someone tries to vote on the same thing twice
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("SQL: %s", e.what());
         }
-        return false;
+        return "{\"RESULT\": \"1000\"}";
     }
 
-    return true;
+    Json::Value event;
+    while(results->next()) {
+        event["Scores"]["user1"] = results->getString(1).asStdString();
+        event["Scores"]["user2"] = results->getString(2).asStdString();
+    }
+    return event.toStyledString();
 }
 
 // Enforce a minimal set of characters. 0-9, a-z, A-Z,
@@ -971,6 +986,8 @@ bool SRV_DB::checkString(std::string& input) {
             case '-':
                 continue;
             case '\n':
+                continue;
+            case ':':
                 continue;
             default:
                 break;
