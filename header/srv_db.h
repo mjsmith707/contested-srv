@@ -7,6 +7,7 @@
 #include "../header/logger.h"
 #include <jsoncpp/json/json.h>
 #include <vector>
+#include <memory>
 
 /* MySQL Connector/C++ specific headers */
 // You must link to mysqlcppcon.so (probably in /usr/lib/)
@@ -26,14 +27,19 @@ class SRV_DB {
     bool connectionStatus;
     Config* runningConfig;
     Logger* runningLog;
+    //std::unique_ptr<sql::Driver> driver;
+    std::unique_ptr<sql::Connection> connection;
     sql::Driver *driver;
-    sql::Connection *connection;
+    //sql::Connection *connection;
 
     static const int reservedWordsSize = 230;
     static const std::string reservedWords[];
 
     bool openConnection();
+    void closeDriver();
     std::string intToString(int val);
+    int getContestPermission(int contestid);
+    bool checkString(std::string& input);
 
     public:
     SRV_DB(Config* newConfig, Logger* newLog);
@@ -56,8 +62,7 @@ class SRV_DB {
     std::string addFriend(std::string username, std::string friendname);
     std::string removeFriend(std::string username, std::string friendname);
     std::string vote(std::string username, int contestid, int imgslot);
-    int getContestPermission(int contestid);
-    bool checkString(std::string& input);
+
 };
 
 #endif

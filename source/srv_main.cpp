@@ -35,6 +35,8 @@ void srv_main() {
         initializeLogging(runningConfig, runningLog);
     }
     catch (std::exception e) {
+        delete runningConfig;
+        delete runningLog;
         cerr << "FATAL ERROR: Initialization failed. Dragons beyond this point.\n Error: " << e.what() << endl;
         return;
     }
@@ -68,6 +70,8 @@ void srv_main() {
         http_main.stop();
         http_main_thread.join();
         runningLog->sendMsg("Server shutting down...");
+        delete runningConfig;
+        delete runningLog;
     }
     catch (std::exception& e) {
         runningLog->sendMsg("%s", e.what());

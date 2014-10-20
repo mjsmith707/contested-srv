@@ -30,19 +30,19 @@ const std::string SRV_DB::reservedWords[] = {"ACCESSIBLE", "ADD", "ALL", "ALTER"
         "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "WHEN", "WHERE",
         "WHILE", "WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL"};
 
-SRV_DB::SRV_DB(Config* newConfig, Logger* newLog) {
+SRV_DB::SRV_DB(Config* newConfig, Logger* newLog)
+{
     runningConfig = newConfig;
     runningLog = newLog;
 
-
-
     driver = nullptr;
-    connection = nullptr;
+    //connection = nullptr;
     connectionStatus = openConnection();
 }
 
 SRV_DB::~SRV_DB() {
-    // Nothing yet.
+    connection->close();
+    driver->threadEnd();
 }
 
 bool SRV_DB::openConnection() {
@@ -51,19 +51,26 @@ bool SRV_DB::openConnection() {
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("Failed to connect to database driver. ErrorMsg: %s ", e.what());
+        connectionStatus = false;
         return false;
     }
 
     try {
-        connection = driver->connect(runningConfig->getSqlServerAddress() + ":" + intToString(runningConfig->getSqlPort()),
-                        runningConfig->getSqlUsername(), runningConfig->getSqlPassword());
+        connection.reset(driver->connect(runningConfig->getSqlServerAddress() + ":" + intToString(runningConfig->getSqlPort()),
+                        runningConfig->getSqlUsername(), runningConfig->getSqlPassword()));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("Failed to connect to database. ErrorMsg: %s ", e.what());
+        connectionStatus = false;
         return false;
     }
     runningLog->sendMsg("Successfully connected to database at %s:%d", runningConfig->getSqlServerAddress().c_str(), runningConfig->getSqlPort());
+    connectionStatus = true;
     return true;
+}
+
+void SRV_DB::closeDriver() {
+    driver->threadEnd();
 }
 
 // This thing just keeps cropping up everywhere..
@@ -99,13 +106,13 @@ int SRV_DB::createUser(std::string username, std::string password, std::string e
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    //std::shared_ptr<sql::Statement> sqlStatement = nullptr;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -129,10 +136,10 @@ int SRV_DB::createUser(std::string username, std::string password, std::string e
     else {
         std::string createStmnt = "INSERT INTO users(user_name, user_score, password, email_address) values('" + username + "','0','" + password + "','" + email_address + "');";
         try {
-            sqlStatement = connection->createStatement();
+            std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
             sqlStatement->execute("USE contested;");
-            sqlStatement = connection->createStatement();
-            sqlStatement->execute(createStmnt);
+            std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+            sqlStatement2->execute(createStmnt);
             return 1005;
         }
         catch (sql::SQLException e) {
@@ -169,13 +176,12 @@ bool SRV_DB::authenticateUser(std::string username, std::string password) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -222,13 +228,12 @@ int SRV_DB::getUserID(std::string& username) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -261,13 +266,12 @@ std::string SRV_DB::getUsername(int userid) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -312,12 +316,11 @@ bool SRV_DB::deleteUser(std::string& username, std::string& password, std::strin
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->execute(query);
         return true;
     }
     catch (sql::SQLException e) {
@@ -375,15 +378,14 @@ std::string SRV_DB::createContest(std::string username, std::string contest_name
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query);
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery("SELECT LAST_INSERT_ID();");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->execute(query);
+        std::unique_ptr<sql::Statement> sqlStatement3(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement3->executeQuery("SELECT LAST_INSERT_ID();"));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -433,13 +435,12 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -485,14 +486,14 @@ int SRV_DB::insertImage(std::string& username, std::string& base64image) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query);
-        results = sqlStatement->executeQuery("SELECT LAST_INSERT_ID();");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->execute(query);
+        std::unique_ptr<sql::Statement> sqlStatement3(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement3->executeQuery("SELECT LAST_INSERT_ID();"));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -559,12 +560,11 @@ int SRV_DB::updateImage(std::string username, int contestID, std::string image, 
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->executeUpdate(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->executeUpdate(query);
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -587,13 +587,12 @@ std::string SRV_DB::getContest(int contestID) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -636,13 +635,12 @@ std::string SRV_DB::getImage(int imageID) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -689,13 +687,12 @@ std::string SRV_DB::getMyFriends(std::string username) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -744,13 +741,12 @@ std::string SRV_DB::getFriendRequests(std::string username) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -796,12 +792,12 @@ std::string SRV_DB::addFriend(std::string username, std::string friendname) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->execute(query);
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -843,14 +839,13 @@ std::string SRV_DB::removeFriend(std::string username, std::string friendname) {
         runningLog->sendMsg("SQL: %s", query2.c_str());
     }
 
-    sql::Statement* sqlStatement;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query1);
-        sqlStatement = connection->createStatement();
-        sqlStatement->execute(query2);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement2->execute(query1);
+        std::unique_ptr<sql::Statement> sqlStatement3(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement3->execute(query2);
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -873,13 +868,12 @@ int SRV_DB::getContestPermission(int contestid) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query);
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
@@ -938,17 +932,16 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
         runningLog->sendMsg("SQL: %s", query3.c_str());
     }
 
-    sql::Statement* sqlStatement;
-    sql::ResultSet* results;
+    std::unique_ptr<sql::ResultSet> results;
     try {
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute(query1);
-        sqlStatement = connection->createStatement();
+        std::unique_ptr<sql::Statement> sqlStatement3(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute(query2);
-        sqlStatement = connection->createStatement();
-        results = sqlStatement->executeQuery(query3);
+        std::unique_ptr<sql::Statement> sqlStatement4(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement4->executeQuery(query3));
     }
     catch (sql::SQLException e) {
         // This will be triggered every time someone tries to vote on the same thing twice

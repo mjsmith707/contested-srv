@@ -32,10 +32,8 @@ void request_parser::reset()
 boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
     try {
         if (req.readHeader) {
-            // Some stupid stuff is happening in here
-            // Splitting single string into vector here
-            // Then rejoining it to a single string later for json eh...
-            // Needs major cleanup
+            // Header parsing in here.
+            // Limited to up to 12 http header fields.
             std::vector<std::string> httpTokens;
             httpTokens.push_back(std::string("Content-Type: "));
             httpTokens.push_back(std::string("User-Agent: "));
@@ -49,6 +47,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             httpTokens.push_back(std::string("Cache-Control: "));
             std::map<std::string, std::string> httpHeaders;
             std::vector<std::string> inputVctr;
+
             std::stringstream inputStream(input);
             std::string temp;
             while (std::getline(inputStream, temp)) {
@@ -90,6 +89,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                     }
                 }
             }
+
             try {
                 std::map<std::string,std::string>::iterator it;
                 it = httpHeaders.find("Content-Length: ");
@@ -101,6 +101,12 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 }
                 std::string contentLength = it->second;
                 req.contentLength = stoi(contentLength);
+                if (req.contentLength < 0) {
+                    if (runningConfig->getDebug()) {
+                        runningLog->sendMsg("contentLength parse failed.");
+                    }
+                    return false;
+                }
             } catch (std::exception e) {
                 if (runningConfig->getDebug()) {
                     runningLog->sendMsg("contentLength parse failed.");
@@ -108,7 +114,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 return false;
             }
 
-            std::string jsonRequest;
+            // Reading the rest of the http request
             for (unsigned int i=httpHeaders.size()+1; i<inputVctr.size(); i++) {
                 std::string temp = inputVctr.at(i);
                 req.readAmount += temp.length();
@@ -124,8 +130,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             }
         }
         else if (!req.readHeader) {
-
-            std::string jsonRequest;
+            // Subsequent calls for more reads go here
             req.readAmount += input.length();
             req.jsonRequest+= input;
             if (runningConfig->getDebug()) {
