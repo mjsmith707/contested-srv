@@ -459,6 +459,8 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         event["contests"][i]["image2"] = getImage(results->getInt(8));
         event["contests"][i]["userOne"] = getUsername(results->getInt(2));
         event["contests"][i]["userTwo"] = getUsername(results->getInt(3));
+        event["contests"][i]["starttime"] = results->getString(12).asStdString();
+        event["contests"][i]["endtime"] = results->getString(13).asStdString();
         i++;
     }
     return event.toStyledString();
@@ -611,6 +613,8 @@ std::string SRV_DB::getContest(int contestID) {
         event["contest"]["userTwo"] = getUsername(results->getInt(3));
         event["contest"]["userOneScore"] = results->getString(5).asStdString();
         event["contest"]["userTwoScore"] = results->getString(6).asStdString();
+        event["contest"]["starttime"] = results->getString(12).asStdString();
+        event["contest"]["endtime"] = results->getString(13).asStdString();
     }
 
     return event.toStyledString();
