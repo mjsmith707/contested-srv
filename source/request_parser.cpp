@@ -182,7 +182,9 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         req.reqparam4 = reqparam4.asString();
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("JSON Parse: username=%s, password=%s, requestid=%s, param1=%s, param2=%s, param3=%s, param4=%s", req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
+            runningLog->sendMsg("JSON Parse: username='%s', password='%s', requestid='%s, param1='%s', param2='%s', param3='%s', param4='%s'",
+            req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(),
+            req.reqparam4.c_str());
         }
 
         return true;

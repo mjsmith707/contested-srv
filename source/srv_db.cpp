@@ -430,7 +430,7 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         return "{\"RESULT\": \"1013\"}";
     }
 
-    std::string query = "SELECT * FROM contest WHERE user1='" + intToString(userid) + "' OR user2='" + intToString(userid) + "' LIMIT " + intToString(startPos) + "," + intToString(endPos) + ";";
+    std::string query = "SELECT * FROM contest WHERE user1='" + intToString(userid) + "' OR user2='" + intToString(userid) + "' OR permissions='" + intToString(userid) + "' LIMIT " + intToString(startPos) + "," + intToString(endPos) + ";";
     if (runningConfig->getDebug()) {
         runningLog->sendMsg("SQL: %s", query.c_str());
     }
@@ -513,7 +513,7 @@ int SRV_DB::insertImage(std::string& username, std::string& base64image) {
 int SRV_DB::updateImage(std::string username, int contestID, std::string image, int imgslot) {
     if (!connectionStatus) {
         if(!openConnection()) {
-            runningLog->sendMsg("insertImage() failed. Unable to connect to database.");
+            runningLog->sendMsg("updateImage() failed. Unable to connect to database.");
             return 1002;
         }
     }
@@ -525,6 +525,74 @@ int SRV_DB::updateImage(std::string username, int contestID, std::string image, 
         return 1013;
     }
 
+    int userid = getUserID(username);
+    if (userid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("updateImage() failed. Userid 0 does not exist.");
+        }
+        return 1002;
+    }
+
+    // Check slot availability/permission
+    std::string query = "SELECT user1, user2, image1, image2, permissions FROM contest WHERE contest_id='" + intToString(contestID) + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query.c_str());
+    }
+    std::unique_ptr<sql::ResultSet> results;
+    try {
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement->execute("USE contested;");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return 1012;
+    }
+    int user1;
+    int user2;
+    int image1;
+    int image2;
+    int permission;
+    while(results->next()) {
+        user1 = results->getInt(1);
+        user2 = results->getInt(2);
+        image1 = results->getInt(3);
+        image2 = results->getInt(4);
+        permission = results->getInt(5);
+    }
+
+    // Check already assigned usernames
+    // Some really fucking convoluted logic here
+    if (permission == -2) {
+        // Locked
+        return 1000;
+    }
+    else if ((imgslot == 1) && ((user1 == 0) || (user1 == userid))) {
+        // Valid user1
+    }
+    else if ((imgslot == 2) && ((user2 == 0) || (user2 == userid))) {
+        // Valid user2
+    }
+    else {
+        if (permission == 0) {
+            // Check if Friend
+        }
+        else if (permission == -1) {
+            // Public
+            // Do nothing
+        }
+        else if ((imgslot == 1) && ((user1 == 0) && (permission == userid))) {
+            // Valid permission user
+        }
+        else if ((imgslot == 2) && ((user2 == 0) && (permission == userid))) {
+            // Valid permission user
+        }
+        else {
+            return 1000;
+        }
+    }
+
     int imageid = insertImage(username, image);
     if (imageid == 0) {
         if (runningConfig->getDebug()) {
@@ -532,41 +600,33 @@ int SRV_DB::updateImage(std::string username, int contestID, std::string image, 
         }
         return 999;
     }
-    int permission = getContestPermission(contestID);
 
-    if (permission == 0) {
-        // Check if Friend
-    }
-    else if (permission == -1) {
-        // Public
-    }
-    else if (permission == -2) {
-        // Locked
-    }
-    else {
-        // Check username
-    }
-
-    std::string query;
+    std::string query2;
     if (imgslot == 1) {
-        query = "UPDATE contest SET image1='" + intToString(imageid) + "', user1='" + intToString(getUserID(username)) +"' WHERE contest_id='" + intToString(contestID)+ "';";
+        if (image1 != -1) {
+            // delete current image
+        }
+        query2 = "UPDATE contest SET image1='" + intToString(imageid) + "', user1='" + intToString(userid) +"' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else if (imgslot == 2) {
-        query = "UPDATE contest SET image2='" + intToString(imageid) + "', user2='" + intToString(getUserID(username)) + "' WHERE contest_id='" + intToString(contestID)+ "';";
+        if (image2 != -1) {
+            // delete current image
+        }
+        query2 = "UPDATE contest SET image2='" + intToString(imageid) + "', user2='" + intToString(userid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else {
         return 1013;
     }
 
     if (runningConfig->getDebug()) {
-        runningLog->sendMsg("SQL: %s", query.c_str());
+        runningLog->sendMsg("SQL: %s", query2.c_str());
     }
 
     try {
         std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
         sqlStatement->execute("USE contested;");
         std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
-        sqlStatement2->executeUpdate(query);
+        sqlStatement2->executeUpdate(query2);
     }
     catch (sql::SQLException e) {
         runningLog->sendMsg("SQL: %s", e.what());
