@@ -97,7 +97,7 @@ void initializeLogging(Config* runningConfig, Logger* runningLog) {
     runningLog->sendMsg("ListenAddress: %s", runningConfig->getListenAddress().c_str());
     runningLog->sendMsg("Port: %d", runningConfig->getPort());
     runningLog->sendMsg("SQLAddress: %s", runningConfig->getSqlServerAddress().c_str());
-    runningLog->sendMsg("SQLPort: %d", runningConfig->getSqlPort());
+    runningLog->sendMsg("SQLPort: %s", runningConfig->getSqlPort().c_str());
     runningLog->sendMsg("SQLUsername: %s", runningConfig->getSqlUsername().c_str());
     runningLog->sendMsg("SQLPassword: %s", runningConfig->getSqlPassword().c_str());
     runningLog->sendMsg(" ");

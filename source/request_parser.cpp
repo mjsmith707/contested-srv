@@ -55,7 +55,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             }
 
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("Parser Input:");
+                runningLog->sendMsg("[%s] Parser Input (First Read):", req.ipAddress.c_str());
                 for (unsigned int i=0; i<inputVctr.size(); i++) {
                     runningLog->sendMsg("%s", inputVctr[i].c_str());
                 }
@@ -70,7 +70,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             }
             else {
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("postHeader parse failed.");
+                    runningLog->sendMsg("[%s] postHeader parse failed.", req.ipAddress.c_str());
                 }
                 return false;
             }
@@ -95,7 +95,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 it = httpHeaders.find("Content-Length: ");
                 if (it == httpHeaders.end()) {
                     if (runningConfig->getDebug()) {
-                        runningLog->sendMsg("contentLength parse failed.");
+                        runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
                     }
                     return false;
                 }
@@ -103,13 +103,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.contentLength = stoi(contentLength);
                 if (req.contentLength < 0) {
                     if (runningConfig->getDebug()) {
-                        runningLog->sendMsg("contentLength parse failed.");
+                        runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
                     }
                     return false;
                 }
             } catch (std::exception e) {
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("contentLength parse failed.");
+                    runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
                 }
                 return false;
             }
@@ -120,8 +120,8 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.readAmount += temp.length();
                 req.jsonRequest += inputVctr.at(i);
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("Content-Length = %d", req.contentLength);
-                    runningLog->sendMsg("Read Amount = %d", req.readAmount);
+                    runningLog->sendMsg("[%s] Content-Length = %d", req.ipAddress.c_str(), req.contentLength);
+                    runningLog->sendMsg("[%s] Read Amount = %d", req.ipAddress.c_str(), req.readAmount);
                 }
             }
             req.readHeader = false;
@@ -134,8 +134,8 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             req.readAmount += input.length();
             req.jsonRequest+= input;
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("Content-Length = %d", req.contentLength);
-                runningLog->sendMsg("Read Amount = %d", req.readAmount);
+                runningLog->sendMsg("[%s] Content-Length = %d", req.ipAddress.c_str(), req.contentLength);
+                runningLog->sendMsg("[%s] Read Amount = %d", req.ipAddress.c_str(), req.readAmount);
             }
             if ((input.length() != 0) && (req.readAmount < req.contentLength)) {
                 return boost::indeterminate;
@@ -143,8 +143,8 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         }
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("%s", req.jsonRequest.c_str());
-            runningLog->sendMsg("=End Parser Input=");
+            runningLog->sendMsg("[%s] ==Truncated==", req.ipAddress.c_str(), req.jsonRequest.c_str());
+            runningLog->sendMsg("[%s] =End Parser Input=", req.ipAddress.c_str());
         }
 
         // Rebuild json object
@@ -154,7 +154,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         bool jsonParsed = jsonObject.parse(req.jsonRequest, root);
         if (!jsonParsed) {
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("JSON Object parse failed.");
+                runningLog->sendMsg("[%s] JSON Object parse failed.", req.ipAddress.c_str());
             }
             return false;
         }
@@ -168,7 +168,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         const Json::Value reqparam4 = root["reqparam4"];
         if (username.empty() || password.empty() || requestid.empty()) {
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("JSON Object parse failed.");
+                runningLog->sendMsg("[%s] JSON Object parse failed.", req.ipAddress.c_str());
             }
             return false;
         }
@@ -182,9 +182,16 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         req.reqparam4 = reqparam4.asString();
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("JSON Parse: username='%s', password='%s', requestid='%s, param1='%s', param2='%s', param3='%s', param4='%s'",
-            req.username.c_str(), req.password.c_str(), req.requestid.c_str(), req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(),
-            req.reqparam4.c_str());
+            if (req.requestid.compare("updateimage") == 0) {
+                runningLog->sendMsg("[%s] JSON Parse: username='%s', password='%s', requestid='%s', param1='%s', param2='base64imagedata', param3='%s', param4='%s'",
+                    req.ipAddress.c_str(), req.username.c_str(), req.password.c_str(), req.requestid.c_str(),
+                    req.reqparam1.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
+            }
+            else {
+                runningLog->sendMsg("[%s] JSON Parse: username='%s', password='%s', requestid='%s', param1='%s', param2='%s', param3='%s', param4='%s'",
+                    req.ipAddress.c_str(), req.username.c_str(), req.password.c_str(), req.requestid.c_str(),
+                    req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
+            }
         }
 
         return true;

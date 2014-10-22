@@ -4,7 +4,7 @@ Config::Config(int& argc, char**& argv, std::string cfgFile) {
     Debug = true;
     Daemon = false;
     Port = 1234;
-    SQLPort = 3306;
+    SQLPort = "3306";
     httpThreads = 4;
     ListenAddress = "0.0.0.0";
     LogFile = "contested-srv.log";
@@ -26,7 +26,7 @@ Config::Config(std::string cfgFile) {
     Debug = true;
     Daemon = false;
     Port = 1234;
-    SQLPort = 4567;
+    SQLPort = "";
     ListenAddress = "0.0.0.0";
     LogFile = "./contested-srv.log";
     ConfigFile = cfgFile;
@@ -91,7 +91,7 @@ void Config::readConfigFile(std::string fileName) {
                 Port = std::stoi(val);
             }
             else if (token.compare("SQLPort") == 0) {
-                SQLPort = std::stoi(val);
+                SQLPort = val;
             }
             else if (token.compare("HTTPThreads") == 0) {
                 httpThreads = std::stoi(val);
@@ -152,7 +152,14 @@ unsigned int Config::getPort() {
     return Port;
 }
 
-unsigned int Config::getSqlPort() {
+std::string Config::getSqlFullAddress() {
+    if (this->getSqlPort().empty()) {
+        return this->getSqlServerAddress();
+    }
+    return this->getSqlServerAddress() + ":" + this->getSqlPort();
+}
+
+std::string Config::getSqlPort() {
     return SQLPort;
 }
 

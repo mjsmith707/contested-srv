@@ -56,7 +56,7 @@ bool SRV_DB::openConnection() {
     }
 
     try {
-        connection.reset(driver->connect(runningConfig->getSqlServerAddress() + ":" + intToString(runningConfig->getSqlPort()),
+        connection.reset(driver->connect(runningConfig->getSqlFullAddress(),
                         runningConfig->getSqlUsername(), runningConfig->getSqlPassword()));
     }
     catch (sql::SQLException e) {
@@ -64,7 +64,7 @@ bool SRV_DB::openConnection() {
         connectionStatus = false;
         return false;
     }
-    runningLog->sendMsg("Successfully connected to database at %s:%d", runningConfig->getSqlServerAddress().c_str(), runningConfig->getSqlPort());
+    runningLog->sendMsg("Successfully connected to database at %s", runningConfig->getSqlFullAddress().c_str());
     connectionStatus = true;
     return true;
 }
@@ -485,7 +485,8 @@ int SRV_DB::insertImage(std::string& username, std::string& base64image) {
 
     std::string query = "INSERT INTO images(owner_id, image) values('" + intToString(userid) + "','" + base64image + "');";
     if (runningConfig->getDebug()) {
-        runningLog->sendMsg("SQL: %s", query.c_str());
+        std::string debugquery = "INSERT INTO images(owner_id, image) values('" + intToString(userid) + "','" + "base64imagedata" + "');";
+        runningLog->sendMsg("SQL: %s", debugquery.c_str());
     }
 
     std::unique_ptr<sql::ResultSet> results;
