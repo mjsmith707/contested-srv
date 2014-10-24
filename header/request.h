@@ -23,8 +23,13 @@ struct request
 {
   std::string method;
   std::string uri;
+  std::string ipAddress;
   int http_version_major;
   int http_version_minor;
+  bool readHeader = true;
+  size_t contentLength = 0;
+  size_t readAmount = 0;
+  std::string jsonRequest;
   std::vector<header> headers;
 
   std::string username;
@@ -33,6 +38,7 @@ struct request
   std::string reqparam1;
   std::string reqparam2;
   std::string reqparam3;
+  std::string reqparam4;
 };
 
 } // namespace server3

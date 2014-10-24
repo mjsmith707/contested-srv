@@ -14,7 +14,7 @@ class Config {
     bool Debug;
     bool Daemon;
     unsigned int Port;
-    unsigned int SQLPort;
+    std::string SQLPort;
     unsigned int httpThreads;
     std::string ListenAddress;
     std::string LogFile;
@@ -34,7 +34,8 @@ class Config {
     bool getDebug();
     bool getDaemon();
     unsigned int getPort();
-    unsigned int getSqlPort();
+    std::string getSqlFullAddress();
+    std::string getSqlPort();
     unsigned int getHttpThreads();
     std::string getListenAddress();
     std::string getLogFile();

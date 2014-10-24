@@ -7,6 +7,7 @@
 #include "../header/logger.h"
 #include <jsoncpp/json/json.h>
 #include <vector>
+#include <memory>
 
 /* MySQL Connector/C++ specific headers */
 // You must link to mysqlcppcon.so (probably in /usr/lib/)
@@ -26,14 +27,19 @@ class SRV_DB {
     bool connectionStatus;
     Config* runningConfig;
     Logger* runningLog;
+    //std::unique_ptr<sql::Driver> driver;
+    std::unique_ptr<sql::Connection> connection;
     sql::Driver *driver;
-    sql::Connection *connection;
+    //sql::Connection *connection;
 
     static const int reservedWordsSize = 230;
     static const std::string reservedWords[];
 
     bool openConnection();
+    void closeDriver();
     std::string intToString(int val);
+    int getContestPermission(int contestid);
+    bool checkString(std::string& input);
 
     public:
     SRV_DB(Config* newConfig, Logger* newLog);
@@ -45,7 +51,7 @@ class SRV_DB {
     int getUserID(std::string& username);
     std::string getUsername(int userid);
     bool deleteUser(std::string& username, std::string& password, std::string& email_address);
-    std::string createContest(std::string username, std::string contest_name, std::string permissions);
+    std::string createContest(std::string username, std::string contest_name, std::string permissions, std::string endtime);
     std::string getUserContests(std::string username, unsigned int startPos, unsigned int endPos);
     int updateImage(std::string username, int contestID, std::string image, int imgslot);
     int insertImage(std::string& username, std::string& base64image);
@@ -55,9 +61,8 @@ class SRV_DB {
     std::string getFriendRequests(std::string username);
     std::string addFriend(std::string username, std::string friendname);
     std::string removeFriend(std::string username, std::string friendname);
-    bool vote(std::string username, int contestid, int imgslot);
-    int getContestPermission(int contestid);
-    bool checkString(std::string& input);
+    std::string vote(std::string username, int contestid, int imgslot);
+
 };
 
 #endif

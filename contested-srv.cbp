@@ -54,7 +54,6 @@
 		<Unit filename="header/request_parser.h" />
 		<Unit filename="header/server.h" />
 		<Unit filename="header/srv_db.h" />
-		<Unit filename="header/srv_net.h" />
 		<Unit filename="source/config.cpp" />
 		<Unit filename="source/connection.cpp" />
 		<Unit filename="source/logger.cpp" />
@@ -65,7 +64,6 @@
 		<Unit filename="source/server.cpp" />
 		<Unit filename="source/srv_db.cpp" />
 		<Unit filename="source/srv_main.cpp" />
-		<Unit filename="source/srv_net.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

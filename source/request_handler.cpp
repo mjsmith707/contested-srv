@@ -86,12 +86,23 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     rep = reply::json_reply(reply::json_empty_parameter);
                     return;
                 }
-                try {
-                    results = srvDB->createContest(req.username, req.reqparam1, req.reqparam2);
+                if (req.reqparam3.empty()) {
+                    try {
+                        results = srvDB->createContest(req.username, req.reqparam1, req.reqparam2, "0000-00-00 00:00:00");
+                    }
+                    catch (std::exception e) {
+                        rep = reply::json_reply(reply::json_bad_parameter);
+                        return;
+                    }
                 }
+                else {
+                    try {
+                        results = srvDB->createContest(req.username, req.reqparam1, req.reqparam2, req.reqparam3);
+                    }
                 catch (std::exception e) {
-                    rep = reply::json_reply(reply::json_bad_parameter);
-                    return;
+                        rep = reply::json_reply(reply::json_bad_parameter);
+                        return;
+                    }
                 }
             }
             else if (req.requestid.compare("updateimage") == 0) {
@@ -169,14 +180,7 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                 try {
                     int contestid = stoi(req.reqparam1);
                     int slot = stoi(req.reqparam2);
-                    if (srvDB->vote(req.username, contestid, slot)) {
-                        rep = reply::json_reply(reply::json_true);
-                        return;
-                    }
-                    else {
-                        rep = reply::json_reply(reply::json_false);
-                        return;
-                    }
+                    results = srvDB->vote(req.username, contestid, slot);
                 }
                 catch (std::exception e) {
                     rep = reply::json_reply(reply::json_bad_parameter);

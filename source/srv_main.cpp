@@ -11,7 +11,10 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <cstring>
 #include <algorithm>
+#include <unistd.h>
+#include <sys/wait.h>
 #include <pthread.h>
 #include <signal.h>
 using namespace std;
@@ -27,9 +30,47 @@ int main (int argc, char* argv[]) {
 }
 
 void srv_main() {
-    Config* runningConfig = new Config("srv.cfg");
-    Logger* runningLog = new Logger(runningConfig);
-    initializeLogging(runningConfig, runningLog);
+    Config* runningConfig = nullptr;
+    Logger* runningLog = nullptr;
+    try {
+        runningConfig = new Config("srv.cfg");
+        runningLog = new Logger(runningConfig);
+        initializeLogging(runningConfig, runningLog);
+
+        // Attempt to detach
+        if (runningConfig->getDaemon()) {
+            std::cout << "Attempting to daemonize process..." << std::endl;
+            pid_t pid;
+            pid_t sid;
+            pid = fork();
+            if (pid < 0) {
+                throw new std::runtime_error("Failed to fork parent process.");
+            }
+            if (pid > 0) {
+                exit(EXIT_SUCCESS);
+            }
+            umask(0);
+
+            sid = setsid();
+            if (sid < 0) {
+                exit(EXIT_FAILURE);
+            }
+
+            if ((chdir("/")) < 0) {
+                exit(EXIT_FAILURE);
+            }
+
+            close(STDIN_FILENO);
+            close(STDOUT_FILENO);
+            close(STDERR_FILENO);
+        }
+    }
+    catch (std::exception e) {
+        delete runningConfig;
+        delete runningLog;
+        cerr << "FATAL ERROR: Initialization failed. Dragons beyond this point.\n Error: " << e.what() << endl;
+        return;
+    }
 
     try {
         // Block all signals for background thread.
@@ -38,6 +79,8 @@ void srv_main() {
         sigset_t old_mask;
         pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask);
 
+        // Start logging service
+        std::thread logging_thread(std::bind(&Logger::run, runningLog));
         // Run server in background thread.
         std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
         http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads, runningConfig, runningLog);
@@ -58,7 +101,13 @@ void srv_main() {
 
         // Stop the server.
         http_main.stop();
+        runningLog->sendMsg("Server shutting down...");
         http_main_thread.join();
+        runningLog->sendMsg("Server threads stopped");
+        runningLog->stop();
+        logging_thread.join();
+        delete runningConfig;
+        delete runningLog;
     }
     catch (std::exception& e) {
         runningLog->sendMsg("%s", e.what());
@@ -84,7 +133,7 @@ void initializeLogging(Config* runningConfig, Logger* runningLog) {
     runningLog->sendMsg("ListenAddress: %s", runningConfig->getListenAddress().c_str());
     runningLog->sendMsg("Port: %d", runningConfig->getPort());
     runningLog->sendMsg("SQLAddress: %s", runningConfig->getSqlServerAddress().c_str());
-    runningLog->sendMsg("SQLPort: %d", runningConfig->getSqlPort());
+    runningLog->sendMsg("SQLPort: %s", runningConfig->getSqlPort().c_str());
     runningLog->sendMsg("SQLUsername: %s", runningConfig->getSqlUsername().c_str());
     runningLog->sendMsg("SQLPassword: %s", runningConfig->getSqlPassword().c_str());
     runningLog->sendMsg(" ");
