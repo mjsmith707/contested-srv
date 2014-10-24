@@ -8,6 +8,8 @@ EXECUTABLE=./bin/Debug/contested-srv
 all: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
+	mkdir -p ./bin/
+	mkdir -p ./bin/Debug/
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
 .cpp.o:
