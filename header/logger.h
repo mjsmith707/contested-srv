@@ -7,7 +7,7 @@
 #include "../header/constants.h"
 #include "../header/config.h"
 #include <atomic>
-#include <thread>
+#include <boost/thread.hpp>
 #include <chrono>
 #include <queue>
 #include <string>
@@ -29,13 +29,13 @@ class Logger {
     std::mutex msgMute;
     std::queue<std::string> messageList;
 
-    bool writeMsg(std::string message);
-    void printMsg(std::string message);
+    bool writeMsg(std::string& message);
+    void printMsg(std::string& message);
 
-    std::string doubleToString(double val);
-    std::string intToString(int val);
-    std::string uintToString(unsigned int val);
-    std::string longToString(long val);
+    std::string doubleToString(double& val);
+    std::string intToString(int& val);
+    std::string uintToString(unsigned int& val);
+    std::string longToString(long& val);
 
     public:
     Logger(Config* configuration);

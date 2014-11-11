@@ -106,15 +106,19 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                 }
             }
             else if (req.requestid.compare("updateimage") == 0) {
-                if (req.reqparam1.empty()) {
+                if (req.reqparam2.empty()) {
+                    rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+                }
+                if (req.reqparam4.empty()) {
                     rep = reply::json_reply(reply::json_empty_parameter);
                     return;
                 }
                 try {
-                    // username, contestid, base64image, slot (1st or 2nd)
+                    // username, contestid, base64image, slot (1st or 2nd), thumbnail
                     int contestid = stoi(req.reqparam1);
                     int slot = stoi(req.reqparam3);
-                    rep = reply::json_reply((reply::status_type)srvDB->updateImage(req.username, contestid, req.reqparam2, slot));
+                    rep = reply::json_reply((reply::status_type)srvDB->updateImage(req.username, contestid, req.reqparam2, slot, req.reqparam4));
                     return;
                 }
                 catch (std::exception e) {
@@ -181,6 +185,26 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     int contestid = stoi(req.reqparam1);
                     int slot = stoi(req.reqparam2);
                     results = srvDB->vote(req.username, contestid, slot);
+                }
+                catch (std::exception e) {
+                    rep = reply::json_reply(reply::json_bad_parameter);
+                    return;
+                }
+            }
+            else if (req.requestid.compare("getImage") == 0) {
+            //std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot)
+				if (req.reqparam1.empty()) {
+					rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+				}
+				if (req.reqparam2.empty()) {
+					rep = reply::json_reply(reply::json_empty_parameter);
+                    return;
+				}
+				try {
+                    int contestid = stoi(req.reqparam1);
+                    int slot = stoi(req.reqparam2);
+                    results = srvDB->publicGetImage(req.username, contestid, slot);
                 }
                 catch (std::exception e) {
                     rep = reply::json_reply(reply::json_bad_parameter);

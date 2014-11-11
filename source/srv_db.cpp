@@ -455,8 +455,8 @@ std::string SRV_DB::getUserContests(std::string username, unsigned int startPos,
         event["contests"][i]["userOneID"] = results->getString(2).asStdString();
         event["contests"][i]["userTwoID"] = results->getString(3).asStdString();
         event["contests"][i]["contestName"] = results->getString(4).asStdString();
-        event["contests"][i]["image1"] = getImage(results->getInt(7));
-        event["contests"][i]["image2"] = getImage(results->getInt(8));
+        event["contests"][i]["image1"] = getImage(results->getInt(9));
+        event["contests"][i]["image2"] = getImage(results->getInt(10));
         event["contests"][i]["userOne"] = getUsername(results->getInt(2));
         event["contests"][i]["userTwo"] = getUsername(results->getInt(3));
         event["contests"][i]["starttime"] = results->getString(12).asStdString();
@@ -511,7 +511,7 @@ int SRV_DB::insertImage(std::string& username, std::string& base64image) {
     return resultInt;
 }
 
-int SRV_DB::updateImage(std::string username, int contestID, std::string image, int imgslot) {
+int SRV_DB::updateImage(std::string username, int contestID, std::string image, int imgslot, std::string thumb) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("updateImage() failed. Unable to connect to database.");
@@ -602,18 +602,26 @@ int SRV_DB::updateImage(std::string username, int contestID, std::string image, 
         return 999;
     }
 
+	int thumbid = insertImage(username, thumb);
+    if (thumbid == 0) {
+        if (runningConfig->getDebug()) {
+            runningLog->sendMsg("updateImage() failed. Couldn't insert thumbnail.");
+        }
+        return 999;
+    }
+
     std::string query2;
     if (imgslot == 1) {
         if (image1 != -1) {
             // delete current image
         }
-        query2 = "UPDATE contest SET image1='" + intToString(imageid) + "', user1='" + intToString(userid) +"' WHERE contest_id='" + intToString(contestID)+ "';";
+        query2 = "UPDATE contest SET image1='" + intToString(imageid) + "', user1='" + intToString(userid) + "', thumb1='" + intToString(thumbid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else if (imgslot == 2) {
         if (image2 != -1) {
             // delete current image
         }
-        query2 = "UPDATE contest SET image2='" + intToString(imageid) + "', user2='" + intToString(userid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
+        query2 = "UPDATE contest SET image2='" + intToString(imageid) + "', user2='" + intToString(userid) + "', thumb2='" + intToString(thumbid) + "' WHERE contest_id='" + intToString(contestID)+ "';";
     }
     else {
         return 1013;
@@ -681,6 +689,78 @@ std::string SRV_DB::getContest(int contestID) {
     return event.toStyledString();
 }
 
+// Public API call for getting a contest's image
+// Completely separate from the one below it!
+std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot) {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getImage() failed. Unable to connect to database.");
+            return "{\"RESULT\": \"1002\"}";
+        }
+    }
+
+    if (contestid == 0) {
+        return "{\"RESULT\": \"1003\"}";
+    }
+
+	std::string query1;
+	if (slot == 1) {
+		query1 = "SELECT image1 FROM contest WHERE contest_id='" + intToString(contestid) + "';";
+	}
+    else if (slot == 2) {
+		query1 = "SELECT image2 FROM contest WHERE contest_id='" + intToString(contestid) + "';";
+    }
+    else {
+		return "{\"RESULT\": \"1003\"}";
+    }
+
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query1.c_str());
+    }
+
+    std::unique_ptr<sql::ResultSet> results1;
+    try {
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement->execute("USE contested;");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results1.reset(sqlStatement2->executeQuery(query1));
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return "{\"RESULT\": \"1003\"}";
+    }
+
+	int imageID = -1;
+    while(results1->next()) {
+        imageID = results1->getInt(1);
+    }
+
+    std::string query2 = "SELECT image FROM images WHERE image_id='" + intToString(imageID) + "';";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: %s", query2.c_str());
+    }
+
+    std::unique_ptr<sql::ResultSet> results;
+    try {
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement->execute("USE contested;");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query2));
+    }
+    catch (sql::SQLException e) {
+        runningLog->sendMsg("SQL: %s", e.what());
+        return "{\"RESULT\": \"1003\"}";
+    }
+
+    sql::SQLString resultStr;
+    while(results->next()) {
+        resultStr = results->getString(1);
+    }
+
+    return "{\"image\": \"" + resultStr.asStdString() + "\"}";
+}
+
+// Internal for building user's contest list
 std::string SRV_DB::getImage(int imageID) {
     std::string resultString = "NULL";
 
@@ -1047,6 +1127,10 @@ bool SRV_DB::checkString(std::string& input) {
                 continue;
             case ':':
                 continue;
+			case '!':
+				continue;
+			case '?':
+				continue;
             default:
                 break;
         }

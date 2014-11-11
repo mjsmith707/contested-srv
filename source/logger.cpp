@@ -47,7 +47,7 @@ void Logger::run() {
             running = false;
             return;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
     }
 
     // Flush remaining messages.
@@ -66,9 +66,9 @@ void Logger::run() {
         running = false;
         return;
     }
-
-    printMsg("Logging thread stopped");
-    writeMsg("Logging thread stopped");
+    std::string thread_end = "Logging thread stopped";
+    printMsg(thread_end);
+    writeMsg(thread_end);
     running = false;
 }
 
@@ -154,7 +154,7 @@ void Logger::sendMsg(const char* strFormat, ...) {
     }
 }
 
-std::string Logger::doubleToString(double val) {
+std::string Logger::doubleToString(double& val) {
     std::string str = "";
     char tmpstr[256];
     sprintf(tmpstr, "%f", val);
@@ -162,7 +162,7 @@ std::string Logger::doubleToString(double val) {
     return str;
 }
 
-std::string Logger::intToString(int val) {
+std::string Logger::intToString(int& val) {
     std::string str = "";
     char tmpstr[256];
     sprintf(tmpstr, "%d", val);
@@ -170,7 +170,7 @@ std::string Logger::intToString(int val) {
     return str;
 }
 
-std::string Logger::uintToString(unsigned int val) {
+std::string Logger::uintToString(unsigned int& val) {
     std::string str = "";
     char tmpstr[256];
     sprintf(tmpstr, "%u", val);
@@ -178,7 +178,7 @@ std::string Logger::uintToString(unsigned int val) {
     return str;
 }
 
-std::string Logger::longToString(long val) {
+std::string Logger::longToString(long& val) {
     std::string str = "";
     char tmpstr[256];
     sprintf(tmpstr, "%ld", val);
@@ -186,7 +186,7 @@ std::string Logger::longToString(long val) {
     return str;
 }
 
-bool Logger::writeMsg(std::string message) {
+bool Logger::writeMsg(std::string& message) {
     std::string logPath = runningConfig->getLogFile();
     try {
         std::ofstream logFile;
@@ -214,7 +214,7 @@ bool Logger::writeMsg(std::string message) {
     return true;
 }
 
-void Logger::printMsg(std::string message) {
+void Logger::printMsg(std::string& message) {
     if (runningConfig->getDaemon()) {
         return;
     }

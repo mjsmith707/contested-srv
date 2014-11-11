@@ -80,7 +80,7 @@ void srv_main() {
         pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask);
 
         // Start logging service
-        std::thread logging_thread(std::bind(&Logger::run, runningLog));
+        boost::thread logging_thread(boost::bind(&Logger::run, runningLog));
         // Run server in background thread.
         std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
         http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads, runningConfig, runningLog);
