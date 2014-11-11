@@ -56,7 +56,11 @@ namespace http {
             private:
             /// Handles the next socket read of input.
             boost::tribool parser(request& req, std::string& input, Config* runningConfig, Logger* runningLog);
+<<<<<<< HEAD
 			std::string intToString(int val);
+=======
+
+>>>>>>> origin/master
         }; // class request_parser
 
 

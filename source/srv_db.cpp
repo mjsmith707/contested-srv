@@ -729,7 +729,11 @@ std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot
     }
 
     if (runningConfig->getDebug()) {
+<<<<<<< HEAD
         runningLog->sendMsg("SQL: " + query1);
+=======
+        runningLog->sendMsg("SQL: %s", query1.c_str());
+>>>>>>> origin/master
     }
 
     std::unique_ptr<sql::ResultSet> results1;
@@ -740,8 +744,12 @@ std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot
         results1.reset(sqlStatement2->executeQuery(query1));
     }
     catch (sql::SQLException e) {
+<<<<<<< HEAD
 		std::string err = e.what();
         runningLog->sendMsg("SQL: " + err);
+=======
+        runningLog->sendMsg("SQL: %s", e.what());
+>>>>>>> origin/master
         return "{\"RESULT\": \"1003\"}";
     }
 
@@ -752,7 +760,11 @@ std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot
 
     std::string query2 = "SELECT image FROM images WHERE image_id='" + intToString(imageID) + "';";
     if (runningConfig->getDebug()) {
+<<<<<<< HEAD
         runningLog->sendMsg("SQL: " + query2);
+=======
+        runningLog->sendMsg("SQL: %s", query2.c_str());
+>>>>>>> origin/master
     }
 
     std::unique_ptr<sql::ResultSet> results;
@@ -763,8 +775,12 @@ std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot
         results.reset(sqlStatement2->executeQuery(query2));
     }
     catch (sql::SQLException e) {
+<<<<<<< HEAD
 		std::string err = e.what();
         runningLog->sendMsg("SQL: " + err);
+=======
+        runningLog->sendMsg("SQL: %s", e.what());
+>>>>>>> origin/master
         return "{\"RESULT\": \"1003\"}";
     }
 

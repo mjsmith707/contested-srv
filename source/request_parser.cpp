@@ -141,8 +141,13 @@ boost::tribool request_parser::parser(request& req, std::string& input, Config* 
         }
 
         if (runningConfig->getDebug()) {
+<<<<<<< HEAD
             runningLog->sendMsg("[" + req.ipAddress + "] ==Truncated==");
             runningLog->sendMsg("[" + req.ipAddress + "] =End Parser Input=");
+=======
+            runningLog->sendMsg("[%s] ==Truncated==", req.ipAddress.c_str());
+            runningLog->sendMsg("[%s] =End Parser Input=", req.ipAddress.c_str());
+>>>>>>> origin/master
         }
 
         // Rebuild json object
@@ -194,6 +199,7 @@ boost::tribool request_parser::parser(request& req, std::string& input, Config* 
     }
 }
 
+<<<<<<< HEAD
 // This thing just keeps cropping up everywhere..
 std::string request_parser::intToString(int val) {
     std::string str = "";
@@ -203,5 +209,7 @@ std::string request_parser::intToString(int val) {
     return str;
 }
 
+=======
+>>>>>>> origin/master
 } // namespace server3
 } // namespace http
