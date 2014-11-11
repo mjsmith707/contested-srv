@@ -80,7 +80,7 @@ void srv_main() {
         pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask);
 
         // Start logging service
-        std::thread logging_thread(std::bind(&Logger::run, runningLog));
+        boost::thread logging_thread(boost::bind(&Logger::run, runningLog));
         // Run server in background thread.
         std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
         http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads, runningConfig, runningLog);
@@ -110,7 +110,8 @@ void srv_main() {
         delete runningLog;
     }
     catch (std::exception& e) {
-        runningLog->sendMsg("%s", e.what());
+		std::string err = e.what();
+        runningLog->sendMsg("Caught Exception on shutdown!" + err);
     }
 }
 
@@ -126,15 +127,15 @@ void initializeLogging(Config* runningConfig, Logger* runningLog) {
     runningLog->sendMsg(" ");
     runningLog->sendMsg("Starting up...");
     runningLog->sendMsg("Configuration Dump:");
-    runningLog->sendMsg("Debug: %d", runningConfig->getDebug());
-    runningLog->sendMsg("Daemon: %d", runningConfig->getDaemon());
-    runningLog->sendMsg("Config: %s", runningConfig->getConfigFile().c_str());
-    runningLog->sendMsg("LogFile: %s", runningConfig->getLogFile().c_str());
-    runningLog->sendMsg("ListenAddress: %s", runningConfig->getListenAddress().c_str());
-    runningLog->sendMsg("Port: %d", runningConfig->getPort());
-    runningLog->sendMsg("SQLAddress: %s", runningConfig->getSqlServerAddress().c_str());
-    runningLog->sendMsg("SQLPort: %s", runningConfig->getSqlPort().c_str());
-    runningLog->sendMsg("SQLUsername: %s", runningConfig->getSqlUsername().c_str());
-    runningLog->sendMsg("SQLPassword: %s", runningConfig->getSqlPassword().c_str());
+    runningLog->sendMsg("Debug: " + intToString(runningConfig->getDebug()));
+    runningLog->sendMsg("Daemon: " + intToString(runningConfig->getDaemon()));
+    runningLog->sendMsg("Config: " + runningConfig->getConfigFile());
+    runningLog->sendMsg("LogFile: " + runningConfig->getLogFile());
+    runningLog->sendMsg("ListenAddress: " + runningConfig->getListenAddress());
+    runningLog->sendMsg("Port: " + intToString(runningConfig->getPort()));
+    runningLog->sendMsg("SQLAddress: " + runningConfig->getSqlServerAddress());
+    runningLog->sendMsg("SQLPort: " + runningConfig->getSqlPort());
+    runningLog->sendMsg("SQLUsername: " + runningConfig->getSqlUsername());
+    runningLog->sendMsg("SQLPassword: " + runningConfig->getSqlPassword());
     runningLog->sendMsg(" ");
 }

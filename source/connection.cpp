@@ -40,7 +40,8 @@ void connection::start()
 {
     request_.ipAddress = socket_.remote_endpoint().address().to_string();
     if (runningConfig->getDebug()) {
-        runningLog->sendMsg("New connection from %s", request_.ipAddress.c_str());
+        //runningLog->sendMsg("New connection from %s", request_.ipAddress.c_str());
+        runningLog->sendMsg("New connection from " + request_.ipAddress);
     }
 
   socket_.async_read_some(boost::asio::buffer(buffer_),

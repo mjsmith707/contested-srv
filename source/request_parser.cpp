@@ -19,32 +19,20 @@
 namespace http {
 namespace server3 {
 
-request_parser::request_parser()
-  : state_(method_start)
-{
+request_parser::request_parser() {
+
 }
 
-void request_parser::reset()
-{
-  state_ = method_start;
-}
+/// HTTP Header Token Initializer
+const std::vector<std::string> request_parser::httpTokens({"Content-Type: ", "User-Agent: ",
+"Host: ", "Connection: ", "Accept-Encoding: ", "Content-Length: ", "Accept-Language: ", "Accept: ",
+"Pragma: ", "Cache-Control: "});
 
-boost::tribool request_parser::newParser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
+boost::tribool request_parser::parser(request& req, std::string& input, Config* runningConfig, Logger* runningLog) {
     try {
         if (req.readHeader) {
             // Header parsing in here.
             // Limited to up to 12 http header fields.
-            std::vector<std::string> httpTokens;
-            httpTokens.push_back(std::string("Content-Type: "));
-            httpTokens.push_back(std::string("User-Agent: "));
-            httpTokens.push_back(std::string("Host: "));
-            httpTokens.push_back(std::string("Connection: "));
-            httpTokens.push_back(std::string("Accept-Encoding: "));
-            httpTokens.push_back(std::string("Content-Length: "));
-            httpTokens.push_back(std::string("Accept-Language: "));
-            httpTokens.push_back(std::string("Accept: "));
-            httpTokens.push_back(std::string("Pragma: "));
-            httpTokens.push_back(std::string("Cache-Control: "));
             std::map<std::string, std::string> httpHeaders;
             std::vector<std::string> inputVctr;
 
@@ -55,9 +43,9 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             }
 
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("[%s] Parser Input (First Read):", req.ipAddress.c_str());
+                runningLog->sendMsg("[" + req.ipAddress + "] Parser Input (First Read):");
                 for (unsigned int i=0; i<inputVctr.size(); i++) {
-                    runningLog->sendMsg("%s", inputVctr[i].c_str());
+                    runningLog->sendMsg(inputVctr[i]);
                 }
             }
 
@@ -70,7 +58,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             }
             else {
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("[%s] postHeader parse failed.", req.ipAddress.c_str());
+                    runningLog->sendMsg("[" + req.ipAddress + "] postHeader parse failed");
                 }
                 return false;
             }
@@ -95,7 +83,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 it = httpHeaders.find("Content-Length: ");
                 if (it == httpHeaders.end()) {
                     if (runningConfig->getDebug()) {
-                        runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
+                        runningLog->sendMsg("[" + req.ipAddress + "] contentLength parse failed.");
                     }
                     return false;
                 }
@@ -103,13 +91,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.contentLength = stoi(contentLength);
                 if (req.contentLength < 0) {
                     if (runningConfig->getDebug()) {
-                        runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
+                        runningLog->sendMsg("[" + req.ipAddress + "] contentLength parse failed.");
                     }
                     return false;
                 }
             } catch (std::exception e) {
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("[%s] contentLength parse failed.", req.ipAddress.c_str());
+                    runningLog->sendMsg("[" + req.ipAddress + "] contentLength parse failed.");
                 }
                 return false;
             }
@@ -120,8 +108,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
                 req.readAmount += temp.length();
                 req.jsonRequest += inputVctr.at(i);
                 if (runningConfig->getDebug()) {
-                    runningLog->sendMsg("[%s] Content-Length = %d", req.ipAddress.c_str(), req.contentLength);
-                    runningLog->sendMsg("[%s] Read Amount = %d", req.ipAddress.c_str(), req.readAmount);
+                    try {
+						runningLog->sendMsg("[" + req.ipAddress + "] Content-Length = " + intToString(req.contentLength));
+						runningLog->sendMsg("[" + req.ipAddress + "] Read Amount = " + intToString(req.readAmount));
+                    }
+                    catch (std::exception e){
+						runningLog->sendMsg("[" + req.ipAddress + "] Caught failed int to string conversion for content-length/read ammount");
+                    }
                 }
             }
             req.readHeader = false;
@@ -134,8 +127,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
             req.readAmount += input.length();
             req.jsonRequest+= input;
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("[%s] Content-Length = %d", req.ipAddress.c_str(), req.contentLength);
-                runningLog->sendMsg("[%s] Read Amount = %d", req.ipAddress.c_str(), req.readAmount);
+				try {
+					runningLog->sendMsg("[" + req.ipAddress + "] Content-Length = " + intToString(req.contentLength));
+					runningLog->sendMsg("[" + req.ipAddress + "] Read Amount = " + intToString(req.readAmount));
+				}
+				catch (std::exception e){
+					runningLog->sendMsg("[" + req.ipAddress + "] Caught failed stoi conversion for content-length/read ammount");
+				}
             }
             if ((input.length() != 0) && (req.readAmount < req.contentLength)) {
                 return boost::indeterminate;
@@ -143,8 +141,8 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         }
 
         if (runningConfig->getDebug()) {
-            runningLog->sendMsg("[%s] ==Truncated==", req.ipAddress.c_str(), req.jsonRequest.c_str());
-            runningLog->sendMsg("[%s] =End Parser Input=", req.ipAddress.c_str());
+            runningLog->sendMsg("[" + req.ipAddress + "] ==Truncated==");
+            runningLog->sendMsg("[" + req.ipAddress + "] =End Parser Input=");
         }
 
         // Rebuild json object
@@ -154,7 +152,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         bool jsonParsed = jsonObject.parse(req.jsonRequest, root);
         if (!jsonParsed) {
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("[%s] JSON Object parse failed.", req.ipAddress.c_str());
+                runningLog->sendMsg("[" + req.ipAddress + "] JSON Object parse failed.");
             }
             return false;
         }
@@ -168,7 +166,7 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
         const Json::Value reqparam4 = root["reqparam4"];
         if (username.empty() || password.empty() || requestid.empty()) {
             if (runningConfig->getDebug()) {
-                runningLog->sendMsg("[%s] JSON Object parse failed.", req.ipAddress.c_str());
+                runningLog->sendMsg("[" + req.ipAddress + "] JSON Object parse failed.");
             }
             return false;
         }
@@ -183,14 +181,10 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
 
         if (runningConfig->getDebug()) {
             if (req.requestid.compare("updateimage") == 0) {
-                runningLog->sendMsg("[%s] JSON Parse: username='%s', password='%s', requestid='%s', param1='%s', param2='base64imagedata', param3='%s', param4='%s'",
-                    req.ipAddress.c_str(), req.username.c_str(), req.password.c_str(), req.requestid.c_str(),
-                    req.reqparam1.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
+				runningLog->sendMsg("[" + req.ipAddress + "] JSON Parse: username ='" + req.username + "', password='" + req.password + "', requestid='" + req.requestid + "', param1='" + req.reqparam1 + "', param2='base64imagedata', param3='" + req.reqparam3 + "', param4='base64thumbdata'");
             }
             else {
-                runningLog->sendMsg("[%s] JSON Parse: username='%s', password='%s', requestid='%s', param1='%s', param2='%s', param3='%s', param4='%s'",
-                    req.ipAddress.c_str(), req.username.c_str(), req.password.c_str(), req.requestid.c_str(),
-                    req.reqparam1.c_str(), req.reqparam2.c_str(), req.reqparam3.c_str(), req.reqparam4.c_str());
+				runningLog->sendMsg("[" + req.ipAddress + "] JSON Parse: username ='" + req.username + "', password='" + req.password + "', requestid='" + req.requestid + "', param1='" + req.reqparam1 + "', param2='" + req.reqparam2 + "', param3='" + req.reqparam3 + "', param4='" + req.reqparam4 + "'");
             }
         }
 
@@ -200,302 +194,13 @@ boost::tribool request_parser::newParser(request& req, std::string& input, Confi
     }
 }
 
-boost::tribool request_parser::consume(request& req, char input)
-{
-  switch (state_)
-  {
-  case method_start:
-    if (!is_char(input) || is_ctl(input) || is_tspecial(input))
-    {
-      return false;
-    }
-    else
-    {
-      state_ = method;
-      req.method.push_back(input);
-      return boost::indeterminate;
-    }
-  case method:
-    if (input == ' ')
-    {
-      state_ = uri;
-      return boost::indeterminate;
-    }
-    else if (!is_char(input) || is_ctl(input) || is_tspecial(input))
-    {
-      return false;
-    }
-    else
-    {
-      req.method.push_back(input);
-      return boost::indeterminate;
-    }
-  case uri_start:
-    if (is_ctl(input))
-    {
-      return false;
-    }
-    else
-    {
-      state_ = uri;
-      req.uri.push_back(input);
-      return boost::indeterminate;
-    }
-  case uri:
-    if (input == ' ')
-    {
-      state_ = http_version_h;
-      return boost::indeterminate;
-    }
-    else if (is_ctl(input))
-    {
-      return false;
-    }
-    else
-    {
-      req.uri.push_back(input);
-      return boost::indeterminate;
-    }
-  case http_version_h:
-    if (input == 'H')
-    {
-      state_ = http_version_t_1;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_t_1:
-    if (input == 'T')
-    {
-      state_ = http_version_t_2;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_t_2:
-    if (input == 'T')
-    {
-      state_ = http_version_p;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_p:
-    if (input == 'P')
-    {
-      state_ = http_version_slash;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_slash:
-    if (input == '/')
-    {
-      req.http_version_major = 0;
-      req.http_version_minor = 0;
-      state_ = http_version_major_start;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_major_start:
-    if (is_digit(input))
-    {
-      req.http_version_major = req.http_version_major * 10 + input - '0';
-      state_ = http_version_major;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_major:
-    if (input == '.')
-    {
-      state_ = http_version_minor_start;
-      return boost::indeterminate;
-    }
-    else if (is_digit(input))
-    {
-      req.http_version_major = req.http_version_major * 10 + input - '0';
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_minor_start:
-    if (is_digit(input))
-    {
-      req.http_version_minor = req.http_version_minor * 10 + input - '0';
-      state_ = http_version_minor;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case http_version_minor:
-    if (input == '\r')
-    {
-      state_ = expecting_newline_1;
-      return boost::indeterminate;
-    }
-    else if (is_digit(input))
-    {
-      req.http_version_minor = req.http_version_minor * 10 + input - '0';
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case expecting_newline_1:
-    if (input == '\n')
-    {
-      state_ = header_line_start;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case header_line_start:
-    if (input == '\r')
-    {
-      state_ = expecting_newline_3;
-      return boost::indeterminate;
-    }
-    else if (!req.headers.empty() && (input == ' ' || input == '\t'))
-    {
-      state_ = header_lws;
-      return boost::indeterminate;
-    }
-    else if (!is_char(input) || is_ctl(input) || is_tspecial(input))
-    {
-      return false;
-    }
-    else
-    {
-      req.headers.push_back(header());
-      req.headers.back().name.push_back(input);
-      state_ = header_name;
-      return boost::indeterminate;
-    }
-  case header_lws:
-    if (input == '\r')
-    {
-      state_ = expecting_newline_2;
-      return boost::indeterminate;
-    }
-    else if (input == ' ' || input == '\t')
-    {
-      return boost::indeterminate;
-    }
-    else if (is_ctl(input))
-    {
-      return false;
-    }
-    else
-    {
-      state_ = header_value;
-      req.headers.back().value.push_back(input);
-      return boost::indeterminate;
-    }
-  case header_name:
-    if (input == ':')
-    {
-      state_ = space_before_header_value;
-      return boost::indeterminate;
-    }
-    else if (!is_char(input) || is_ctl(input) || is_tspecial(input))
-    {
-      return false;
-    }
-    else
-    {
-      req.headers.back().name.push_back(input);
-      return boost::indeterminate;
-    }
-  case space_before_header_value:
-    if (input == ' ')
-    {
-      state_ = header_value;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case header_value:
-    if (input == '\r')
-    {
-      state_ = expecting_newline_2;
-      return boost::indeterminate;
-    }
-    else if (is_ctl(input))
-    {
-      return false;
-    }
-    else
-    {
-      req.headers.back().value.push_back(input);
-      return boost::indeterminate;
-    }
-  case expecting_newline_2:
-    if (input == '\n')
-    {
-      state_ = header_line_start;
-      return boost::indeterminate;
-    }
-    else
-    {
-      return false;
-    }
-  case expecting_newline_3:
-    return (input == '\n');
-  default:
-    return false;
-  }
-}
-
-bool request_parser::is_char(int c)
-{
-  return c >= 0 && c <= 127;
-}
-
-bool request_parser::is_ctl(int c)
-{
-  return (((c >= 0) && (c <= 31)) || (c == 127));
-}
-
-bool request_parser::is_tspecial(int c)
-{
-  switch (c)
-  {
-  case '(': case ')': case '<': case '>': case '@':
-  case ',': case ';': case ':': case '\\': case '"':
-  case '/': case '[': case ']': case '?': case '=':
-  case '{': case '}': case ' ': case '\t':
-    return true;
-  default:
-    return false;
-  }
-}
-
-bool request_parser::is_digit(int c)
-{
-  return c >= '0' && c <= '9';
+// This thing just keeps cropping up everywhere..
+std::string request_parser::intToString(int val) {
+    std::string str = "";
+    char tmpstr[256];
+    sprintf(tmpstr, "%d", val);
+    str = tmpstr;
+    return str;
 }
 
 } // namespace server3
