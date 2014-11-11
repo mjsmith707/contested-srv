@@ -192,10 +192,6 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                 }
             }
             else if (req.requestid.compare("getimage") == 0) {
-<<<<<<< HEAD
-=======
-            //std::string SRV_DB::publicGetImage(std::string username, int contestid, int slot)
->>>>>>> origin/master
 				if (req.reqparam1.empty()) {
 					rep = reply::json_reply(reply::json_empty_parameter);
                     return;
