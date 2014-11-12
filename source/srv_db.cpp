@@ -1060,7 +1060,7 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
     if (!connectionStatus) {
         if(!openConnection()) {
             runningLog->sendMsg("vote() failed. Unable to connect to database.");
-            return "{\"RESULT\": \"1000\"}";
+            return "{\"RESULT\": \"1001\"}";
         }
     }
 
@@ -1068,7 +1068,7 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
         if (runningConfig->getDebug()) {
             runningLog->sendMsg("Caught Special Character: " + username);
         }
-        return "{\"RESULT\": \"1000\"}";
+        return "{\"RESULT\": \"1001\"}";
     }
 
     std::string query2;
@@ -1082,12 +1082,12 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
         query3 = "SELECT user1_score, user2_score FROM contest WHERE contest_id='" + intToString(contestid) + "';";
     }
     else {
-        return "{\"RESULT\": \"1000\"}";
+        return "{\"RESULT\": \"1001\"}";
     }
 
     int userid = getUserID(username);
     if (userid == 0) {
-        return "{\"RESULT\": \"1000\"}";
+        return "{\"RESULT\": \"1001\"}";
     }
 
     // if (contestExists(contestid)
@@ -1116,7 +1116,7 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
 			std::string err = e.what();
             runningLog->sendMsg("SQL: " + err);
         }
-        return "{\"RESULT\": \"1000\"}";
+        return "{\"RESULT\": \"1001\"}";
     }
 
     Json::Value event;
@@ -1124,6 +1124,7 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
         event["Scores"]["user1"] = results->getString(1).asStdString();
         event["Scores"]["user2"] = results->getString(2).asStdString();
     }
+
     return event.toStyledString();
 }
 
