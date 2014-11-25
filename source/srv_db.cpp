@@ -1194,3 +1194,95 @@ bool SRV_DB::checkString(std::string& input) {
     }
     return true;
 }
+
+std::string SRV_DB::getRandomContests() {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getRandomContests() failed. Unable to connect to database.");
+            return "{\"RESULT\": \"1002\"}";
+        }
+    }
+
+    //std::string query = "SELECT * FROM contest WHERE permissions='-1' OR permissions='-2' ORDER BY RAND() LIMIT 50";
+    std::string query = "SELECT * FROM contest ORDER BY RAND() LIMIT 50";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: " + query);
+    }
+
+    std::unique_ptr<sql::ResultSet> results;
+    try {
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement->execute("USE contested;");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
+    }
+    catch (sql::SQLException e) {
+		std::string err = e.what();
+        runningLog->sendMsg("SQL: " + err);
+        return "{\"RESULT\": \"1003\"}";
+    }
+
+    unsigned int i=0;
+    unsigned int limit = 50;
+    Json::Value event;
+    while(results->next() && (i<limit)) {
+        event["contests"][i]["contestID"] = results->getString(1).asStdString();
+        event["contests"][i]["userOneID"] = results->getString(2).asStdString();
+        event["contests"][i]["userTwoID"] = results->getString(3).asStdString();
+        event["contests"][i]["contestName"] = results->getString(4).asStdString();
+        event["contests"][i]["image1"] = getImage(results->getInt(9));
+        event["contests"][i]["image2"] = getImage(results->getInt(10));
+        event["contests"][i]["userOne"] = getUsername(results->getInt(2));
+        event["contests"][i]["userTwo"] = getUsername(results->getInt(3));
+        event["contests"][i]["starttime"] = results->getString(12).asStdString();
+        event["contests"][i]["endtime"] = results->getString(13).asStdString();
+        i++;
+    }
+    return event.toStyledString();
+}
+
+std::string SRV_DB::getTopContests() {
+    if (!connectionStatus) {
+        if(!openConnection()) {
+            runningLog->sendMsg("getRandomContests() failed. Unable to connect to database.");
+            return "{\"RESULT\": \"1002\"}";
+        }
+    }
+
+    //std::string query = "SELECT * FROM contest WHERE permissions='-1' OR permissions='0' IN (SELECT MAX(user1_score) AND MAX(user2_score) from contest) LIMIT 50;";
+    std::string query = "SELECT * FROM contest WHERE (SELECT MAX(user1_score) AND MAX(user2_score) from contest) LIMIT 50;";
+    if (runningConfig->getDebug()) {
+        runningLog->sendMsg("SQL: " + query);
+    }
+
+    std::unique_ptr<sql::ResultSet> results;
+    try {
+        std::unique_ptr<sql::Statement> sqlStatement(connection->createStatement(), std::default_delete<sql::Statement>());
+        sqlStatement->execute("USE contested;");
+        std::unique_ptr<sql::Statement> sqlStatement2(connection->createStatement(), std::default_delete<sql::Statement>());
+        results.reset(sqlStatement2->executeQuery(query));
+    }
+    catch (sql::SQLException e) {
+		std::string err = e.what();
+        runningLog->sendMsg("SQL: " + err);
+        return "{\"RESULT\": \"1003\"}";
+    }
+
+    unsigned int i=0;
+    unsigned int limit = 50;
+    Json::Value event;
+    while(results->next() && (i<limit)) {
+        event["contests"][i]["contestID"] = results->getString(1).asStdString();
+        event["contests"][i]["userOneID"] = results->getString(2).asStdString();
+        event["contests"][i]["userTwoID"] = results->getString(3).asStdString();
+        event["contests"][i]["contestName"] = results->getString(4).asStdString();
+        event["contests"][i]["image1"] = getImage(results->getInt(9));
+        event["contests"][i]["image2"] = getImage(results->getInt(10));
+        event["contests"][i]["userOne"] = getUsername(results->getInt(2));
+        event["contests"][i]["userTwo"] = getUsername(results->getInt(3));
+        event["contests"][i]["starttime"] = results->getString(12).asStdString();
+        event["contests"][i]["endtime"] = results->getString(13).asStdString();
+        i++;
+    }
+    return event.toStyledString();
+}

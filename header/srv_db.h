@@ -64,6 +64,9 @@ class SRV_DB {
     std::string removeFriend(std::string username, std::string friendname);
     std::string vote(std::string username, int contestid, int imgslot);
 
+	// Helper Functions. Not ever intended for client access
+	std::string getRandomContests();
+	std::string getTopContests();
 };
 
 #endif

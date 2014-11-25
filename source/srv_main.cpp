@@ -4,6 +4,8 @@
 #include "../header/logger.h"
 #include "../header/srv_db.h"
 #include "../header/server.h"
+#include "../header/srv_randcontst.h"
+#include "../header/srv_topcontst.h"
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -32,10 +34,18 @@ int main (int argc, char* argv[]) {
 void srv_main() {
     Config* runningConfig = nullptr;
     Logger* runningLog = nullptr;
+    SRV_DB* runningRandDB = nullptr;
+    SRV_DB* runningTopDB = nullptr;
+    SRV_RANDCONTST* runningRandContests = nullptr;
+    SRV_TOPCONTST* runningTopContests = nullptr;
     try {
         runningConfig = new Config("srv.cfg");
         runningLog = new Logger(runningConfig);
         initializeLogging(runningConfig, runningLog);
+        runningRandDB = new SRV_DB(runningConfig, runningLog);
+        runningTopDB = new SRV_DB(runningConfig, runningLog);
+        runningRandContests = new SRV_RANDCONTST(runningConfig, runningLog, runningRandDB);
+        runningTopContests = new SRV_TOPCONTST(runningConfig, runningLog, runningTopDB);
 
         // Attempt to detach
         if (runningConfig->getDaemon()) {
@@ -73,7 +83,7 @@ void srv_main() {
     }
 
     try {
-        // Block all signals for background thread.
+        // Block all signals for background threads.
         sigset_t new_mask;
         sigfillset(&new_mask);
         sigset_t old_mask;
@@ -81,6 +91,10 @@ void srv_main() {
 
         // Start logging service
         boost::thread logging_thread(boost::bind(&Logger::run, runningLog));
+        // Start Random Contests polling service
+        boost::thread randcontests_thread(boost::bind(&SRV_RANDCONTST::run, runningRandContests));
+        // Start Top Contests polling service
+		boost::thread topcontests_thread(boost::bind(&SRV_TOPCONTST::run, runningTopContests));
         // Run server in background thread.
         std::size_t num_threads = boost::lexical_cast<std::size_t>(runningConfig->getHttpThreads());
         http::server3::server http_main(runningConfig->getListenAddress(), intToString(runningConfig->getPort()), "./tmproot/", num_threads, runningConfig, runningLog);
@@ -104,8 +118,23 @@ void srv_main() {
         runningLog->sendMsg("Server shutting down...");
         http_main_thread.join();
         runningLog->sendMsg("Server threads stopped");
+        runningRandContests->stop();
+        runningLog->sendMsg("Random Contests thread shutting down...");
+        randcontests_thread.interrupt();
+        randcontests_thread.join();
+        runningLog->sendMsg("Random Contests thread stopped");
+        runningTopContests->stop();
+        runningLog->sendMsg("Top Contests thread shutting down...");
+        topcontests_thread.interrupt();
+        topcontests_thread.join();
+        runningLog->sendMsg("Top Contests thread stopped");
         runningLog->stop();
+        runningLog->sendMsg("Logging thread shutting down...");
         logging_thread.join();
+		delete runningRandContests;
+		delete runningTopContests;
+		delete runningRandDB;
+		delete runningTopDB;
         delete runningConfig;
         delete runningLog;
     }

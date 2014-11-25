@@ -1,4 +1,4 @@
-#include "../header/config.h"
+#include "../header/srv_randcontst.h"
 
 Config::Config(int& argc, char**& argv, std::string cfgFile) {
     Debug = true;
@@ -230,4 +230,26 @@ void Config::setSqlUsername(std::string username) {
 
 void Config::setSqlPassword(std::string password) {
     SQLPassword = password;
+}
+
+// Cheating with the locked datastructures.
+// For the love of god change this to lockfree in production
+void Config::setRandomContests(std::string newRand) {
+	std::lock_guard<std::mutex> randLock(randMute);
+	randomContests = newRand;
+}
+
+std::string Config::getRandomContests() {
+	std::lock_guard<std::mutex> randLock(randMute);
+	return randomContests;
+}
+
+void Config::setTopContests(std::string newTop) {
+	std::lock_guard<std::mutex> topLock(topMute);
+	topContests = newTop;
+}
+
+std::string Config::getTopContests() {
+	std::lock_guard<std::mutex> topLock(topMute);
+	return topContests;
 }

@@ -210,6 +210,12 @@ void request_handler::handle_request(const request& req, reply& rep, Config* run
                     return;
                 }
             }
+            else if (req.requestid.compare("getrandomcontests") == 0) {
+				results = runningConfig->getRandomContests();
+            }
+            else if (req.requestid.compare("gettopcontests") == 0) {
+				results = runningConfig->getTopContests();
+            }
             else {
                 rep = reply::json_reply(reply::json_bad_request);
                 return;

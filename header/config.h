@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <mutex>
 
 class Config {
     private:
@@ -22,6 +23,11 @@ class Config {
     std::string SQLServerAddress;
     std::string SQLUsername;
     std::string SQLPassword;
+
+    std::mutex randMute;
+    std::mutex topMute;
+    std::string randomContests;
+    std::string topContests;
 
     void readConfigFile(std::string fileName);
     void readParameters(std::vector<std::string> parameters);
@@ -54,6 +60,12 @@ class Config {
     void setSqlServerAddress(std::string address);
     void setSqlUsername(std::string username);
     void setSqlPassword(std::string password);
+
+    // Hijacking available class for random contests and top contests
+    void setRandomContests(std::string);
+    std::string getRandomContests();
+    void setTopContests(std::string);
+    std::string getTopContests();
 };
 
 #endif
