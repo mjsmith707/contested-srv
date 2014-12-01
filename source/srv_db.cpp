@@ -1075,7 +1075,7 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
     std::string query3;
     if (imgslot == 1) {
         query2 = "UPDATE contest SET user1_score = LAST_INSERT_ID(user1_score + 1) WHERE contest_id='" + intToString(contestid) + "';";
-        query3 = "SELECT user1_score FROM contest WHERE contest_id='" + intToString(contestid) + "';";
+        query3 = "SELECT user1_score, user2_score FROM contest WHERE contest_id='" + intToString(contestid) + "';";
     }
     else if (imgslot == 2) {
         query2 = "UPDATE contest SET user2_score = LAST_INSERT_ID(user2_score + 1) WHERE contest_id='" + intToString(contestid) + "';";
@@ -1116,7 +1116,15 @@ std::string SRV_DB::vote(std::string username, int contestid, int imgslot) {
 			std::string err = e.what();
             runningLog->sendMsg("SQL: " + err);
         }
-        return "{\"RESULT\": \"1001\"}";
+        try {
+			std::unique_ptr<sql::Statement> sqlStatement4(connection->createStatement(), std::default_delete<sql::Statement>());
+			results.reset(sqlStatement4->executeQuery(query3));
+        }
+        catch (sql::SQLException e) {
+			std::string err = e.what();
+			runningLog->sendMsg("SQL: " + err);
+			return "{\"RESULT\": \"1001\"}";
+        }
     }
 
     Json::Value event;
